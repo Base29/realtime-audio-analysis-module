@@ -1,21 +1,17 @@
 cmake_minimum_required(VERSION 3.18.0)
-
 project(realtimeaudioanalyzer)
 
-# Add KissFFT files
-# We will download/copy kiss_fft simple source or expect it in src/main/cpp/kiss_fft
-# For this implementation, we will bundle the simplified kiss_fft.c and kiss_fft.h
+# CMake is invoked with -S <module>/android, so use module-root relative paths:
+set(CPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp)
+set(KISS_FFT_DIR ${CPP_DIR}/kiss_fft)
 
-set(KISS_FFT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/kiss_fft)
-
-file(GLOB KISS_FFT_SOURCES
-    "${KISS_FFT_DIR}/kiss_fft.c"
-    "${KISS_FFT_DIR}/kiss_fftr.c"
+set(KISS_FFT_SOURCES
+    ${KISS_FFT_DIR}/kiss_fft.c
+    ${KISS_FFT_DIR}/kiss_fftr.c
 )
 
-# JNI Wrapper
-file(GLOB JNI_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/audio-analysis-jni.cpp"
+set(JNI_SOURCES
+    ${CPP_DIR}/audio-analysis-jni.cpp
 )
 
 add_library(realtimeaudioanalyzer SHARED
@@ -24,6 +20,7 @@ add_library(realtimeaudioanalyzer SHARED
 )
 
 target_include_directories(realtimeaudioanalyzer PRIVATE
+    ${CPP_DIR}
     ${KISS_FFT_DIR}
 )
 
@@ -32,3 +29,6 @@ find_library(log-lib log)
 target_link_libraries(realtimeaudioanalyzer
     ${log-lib}
 )
+
+# Needed for KissFFT static build on Android
+target_compile_definitions(realtimeaudioanalyzer PRIVATE KISS_FFT_STATIC)

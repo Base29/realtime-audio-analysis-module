@@ -1,13 +1,23 @@
 #include "kiss_fftr.h"
+#include "kiss_fft.h"
 #include "_kiss_fft_guts.h"
 
+struct kiss_fftr_state
+{
+  kiss_fft_cfg substate;
+  kiss_fft_cpx *tmpbuf;
+  kiss_fft_cpx *super_twiddles;
+};
+
 kiss_fftr_cfg kiss_fftr_alloc(int nfft, int inverse_fft, void *mem,
-                              size_t *lenmem) {
+                              size_t *lenmem)
+{
   int i;
   kiss_fftr_cfg st = NULL;
   size_t subsize, memneeded;
 
-  if (nfft & 1) {
+  if (nfft & 1)
+  {
     fprintf(stderr, "Real FFT optimization must be even.\n");
     return NULL;
   }
@@ -17,9 +27,12 @@ kiss_fftr_cfg kiss_fftr_alloc(int nfft, int inverse_fft, void *mem,
   memneeded = sizeof(struct kiss_fftr_state) + subsize +
               sizeof(kiss_fft_cpx) * (nfft * 3 / 2);
 
-  if (lenmem == NULL) {
+  if (lenmem == NULL)
+  {
     st = (kiss_fftr_cfg)KISS_FFT_MALLOC(memneeded);
-  } else {
+  }
+  else
+  {
     if (*lenmem >= memneeded)
       st = (kiss_fftr_cfg)mem;
     *lenmem = memneeded;
@@ -32,7 +45,8 @@ kiss_fftr_cfg kiss_fftr_alloc(int nfft, int inverse_fft, void *mem,
   st->super_twiddles = st->tmpbuf + nfft;
   kiss_fft_alloc(nfft, inverse_fft, st->substate, &subsize);
 
-  for (i = 0; i < nfft / 2; ++i) {
+  for (i = 0; i < nfft / 2; ++i)
+  {
     double phase =
         -3.14159265358979323846264338327 * ((double)(i + 1) / nfft + .5);
     if (inverse_fft)
@@ -43,12 +57,14 @@ kiss_fftr_cfg kiss_fftr_alloc(int nfft, int inverse_fft, void *mem,
 }
 
 void kiss_fftr(kiss_fftr_cfg st, const kiss_fft_scalar *timedata,
-               kiss_fft_cpx *freqdata) {
+               kiss_fft_cpx *freqdata)
+{
   /* input buffer timedata is stored row-wise */
   int k, ncfft;
   kiss_fft_cpx fpnk, fpk, f1k, f2k, tw, tdc;
 
-  if (st->substate->inverse) {
+  if (st->substate->inverse)
+  {
     fprintf(stderr, "kiss fft usage error: improper alloc\n");
     exit(1);
   }
@@ -68,7 +84,8 @@ void kiss_fftr(kiss_fftr_cfg st, const kiss_fft_scalar *timedata,
   C_FIXDIV(tdc, 2);
   freqdata[0] = tdc;
 
-  for (k = 1; k <= ncfft / 2; ++k) {
+  for (k = 1; k <= ncfft / 2; ++k)
+  {
     fpk = st->tmpbuf[k];
     fpnk.r = st->tmpbuf[ncfft - k].r;
     fpnk.i = -st->tmpbuf[ncfft - k].i;
@@ -87,11 +104,13 @@ void kiss_fftr(kiss_fftr_cfg st, const kiss_fft_scalar *timedata,
 }
 
 void kiss_fftri(kiss_fftr_cfg st, const kiss_fft_cpx *freqdata,
-                kiss_fft_scalar *timedata) {
+                kiss_fft_scalar *timedata)
+{
   /* input buffer timedata is stored row-wise */
   int k, ncfft;
 
-  if (st->substate->inverse == 0) {
+  if (st->substate->inverse == 0)
+  {
     fprintf(stderr, "kiss fft usage error: improper alloc\n");
     exit(1);
   }
@@ -101,7 +120,8 @@ void kiss_fftri(kiss_fftr_cfg st, const kiss_fft_cpx *freqdata,
   st->tmpbuf[0].r = freqdata[0].r + freqdata[0].i;
   st->tmpbuf[0].i = freqdata[0].r - freqdata[0].i;
 
-  for (k = 1; k <= ncfft / 2; ++k) {
+  for (k = 1; k <= ncfft / 2; ++k)
+  {
     kiss_fft_cpx fk, fnkc, fek, fok, tmp;
     fk = freqdata[k];
     fnkc.r = freqdata[ncfft - k].r;

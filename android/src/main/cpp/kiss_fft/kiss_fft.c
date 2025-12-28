@@ -1,3 +1,4 @@
+#include "kiss_fft.h"
 #include "_kiss_fft_guts.h"
 
 /* The guts header contains all the multiplication and addition macros that are
@@ -5,12 +6,14 @@
  structure definition. */
 
 static void kf_bfly2(kiss_fft_cpx *Fout, const size_t fstride,
-                     const kiss_fft_cfg st, int m) {
+                     const kiss_fft_cfg st, int m)
+{
   kiss_fft_cpx *Fout2;
   kiss_fft_cpx *tw1 = st->twiddles;
   kiss_fft_cpx t;
   Fout2 = Fout + m;
-  do {
+  do
+  {
     C_FIXDIV(*Fout, 2);
     C_FIXDIV(*Fout2, 2);
 
@@ -24,7 +27,8 @@ static void kf_bfly2(kiss_fft_cpx *Fout, const size_t fstride,
 }
 
 static void kf_bfly4(kiss_fft_cpx *Fout, const size_t fstride,
-                     const kiss_fft_cfg st, const size_t m) {
+                     const kiss_fft_cfg st, const size_t m)
+{
   kiss_fft_cpx *tw1, *tw2, *tw3;
   kiss_fft_cpx scratch[6];
   size_t k = m;
@@ -33,7 +37,8 @@ static void kf_bfly4(kiss_fft_cpx *Fout, const size_t fstride,
 
   tw3 = tw2 = tw1 = st->twiddles;
 
-  do {
+  do
+  {
     C_FIXDIV(*Fout, 4);
     C_FIXDIV(Fout[m], 4);
     C_FIXDIV(Fout[m2], 4);
@@ -53,12 +58,15 @@ static void kf_bfly4(kiss_fft_cpx *Fout, const size_t fstride,
     tw3 += fstride * 3;
     C_ADDTO(*Fout, scratch[3]);
 
-    if (st->inverse) {
+    if (st->inverse)
+    {
       Fout[m].r = scratch[5].r - scratch[4].i;
       Fout[m].i = scratch[5].i + scratch[4].r;
       Fout[m3].r = scratch[5].r + scratch[4].i;
       Fout[m3].i = scratch[5].i - scratch[4].r;
-    } else {
+    }
+    else
+    {
       Fout[m].r = scratch[5].r + scratch[4].i;
       Fout[m].i = scratch[5].i - scratch[4].r;
       Fout[m3].r = scratch[5].r - scratch[4].i;
@@ -69,7 +77,8 @@ static void kf_bfly4(kiss_fft_cpx *Fout, const size_t fstride,
 }
 
 static void kf_bfly3(kiss_fft_cpx *Fout, const size_t fstride,
-                     const kiss_fft_cfg st, size_t m) {
+                     const kiss_fft_cfg st, size_t m)
+{
   size_t k = m;
   const size_t m2 = 2 * m;
   kiss_fft_cpx *tw1, *tw2;
@@ -79,7 +88,8 @@ static void kf_bfly3(kiss_fft_cpx *Fout, const size_t fstride,
 
   tw1 = tw2 = st->twiddles;
 
-  do {
+  do
+  {
     C_FIXDIV(*Fout, 3);
     C_FIXDIV(Fout[m], 3);
     C_FIXDIV(Fout[m2], 3);
@@ -110,7 +120,8 @@ static void kf_bfly3(kiss_fft_cpx *Fout, const size_t fstride,
 }
 
 static void kf_bfly5(kiss_fft_cpx *Fout, const size_t fstride,
-                     const kiss_fft_cfg st, int m) {
+                     const kiss_fft_cfg st, int m)
+{
   kiss_fft_cpx *Fout0, *Fout1, *Fout2, *Fout3, *Fout4;
   int u;
   kiss_fft_cpx scratch[13];
@@ -127,7 +138,8 @@ static void kf_bfly5(kiss_fft_cpx *Fout, const size_t fstride,
   Fout4 = Fout0 + 4 * m;
 
   tw = st->twiddles;
-  for (u = 0; u < m; ++u) {
+  for (u = 0; u < m; ++u)
+  {
     C_FIXDIV(*Fout0, 5);
     C_FIXDIV(*Fout1, 5);
     C_FIXDIV(*Fout2, 5);
@@ -180,7 +192,8 @@ static void kf_bfly5(kiss_fft_cpx *Fout, const size_t fstride,
 /* perform the butterfly for one stage of a mixed radix FFT */
 static void kf_work(kiss_fft_cpx *Fout, const kiss_fft_cpx *f,
                     const size_t fstride, int in_stride, int *factors,
-                    const kiss_fft_cfg st) {
+                    const kiss_fft_cfg st)
+{
   kiss_fft_cpx *Fout_beg = Fout;
   const int p = *factors++; /* the radix  */
   const int m = *factors++; /* stage's fft nfft/p */
@@ -189,7 +202,8 @@ static void kf_work(kiss_fft_cpx *Fout, const kiss_fft_cpx *f,
 #ifdef _OPENMP
   // use openmp extensions at the
   // top-level (not recursive)
-  if (fstride == 1 && p <= 5) {
+  if (fstride == 1 && p <= 5)
+  {
     int k;
 
     // execute the p different work units in different threads
@@ -199,7 +213,8 @@ static void kf_work(kiss_fft_cpx *Fout, const kiss_fft_cpx *f,
               factors, st);
     // all threads have joined by this point
 
-    switch (p) {
+    switch (p)
+    {
     case 2:
       kf_bfly2(Fout, fstride, st, m);
       break;
@@ -220,13 +235,18 @@ static void kf_work(kiss_fft_cpx *Fout, const kiss_fft_cpx *f,
   }
 #endif
 
-  if (m == 1) {
-    do {
+  if (m == 1)
+  {
+    do
+    {
       *Fout = *f;
       f += fstride * in_stride;
     } while (++Fout != Fout_end);
-  } else {
-    do {
+  }
+  else
+  {
+    do
+    {
       // recursive call:
       // DFT of size m*p performed by doing
       // p instances of smaller DFTs of size m,
@@ -238,7 +258,8 @@ static void kf_work(kiss_fft_cpx *Fout, const kiss_fft_cpx *f,
 
   Fout = Fout_beg;
 
-  switch (p) {
+  switch (p)
+  {
   case 2:
     kf_bfly2(Fout, fstride, st, m);
     break;
@@ -261,15 +282,19 @@ static void kf_work(kiss_fft_cpx *Fout, const kiss_fft_cpx *f,
     where
     p[i] * m[i] = m[i-1]
     m0 = n                 */
-static void kf_factor(int n, int *facbuf) {
+static void kf_factor(int n, int *facbuf)
+{
   int p = 4;
   double floor_sqrt;
   floor_sqrt = floor(sqrt((double)n));
 
   /*factor out powers of 4, powers of 2, then any remaining primes */
-  do {
-    while (n % p) {
-      switch (p) {
+  do
+  {
+    while (n % p)
+    {
+      switch (p)
+      {
       case 4:
         p = 2;
         break;
@@ -297,24 +322,30 @@ static void kf_factor(int n, int *facbuf) {
  * such, It can be freed with free(), rather than a kiss_fft-specific function.
  * */
 kiss_fft_cfg kiss_fft_alloc(int nfft, int inverse_fft, void *mem,
-                            size_t *lenmem) {
+                            size_t *lenmem)
+{
   kiss_fft_cfg st = NULL;
   size_t memneeded = sizeof(struct kiss_fft_state) +
                      sizeof(kiss_fft_cpx) * (nfft - 1); /* twiddle factors*/
 
-  if (lenmem == NULL) {
+  if (lenmem == NULL)
+  {
     st = (kiss_fft_cfg)KISS_FFT_MALLOC(memneeded);
-  } else {
+  }
+  else
+  {
     if (mem != NULL && *lenmem >= memneeded)
       st = (kiss_fft_cfg)mem;
     *lenmem = memneeded;
   }
-  if (st) {
+  if (st)
+  {
     int i;
     st->nfft = nfft;
     st->inverse = inverse_fft;
 
-    for (i = 0; i < nfft; ++i) {
+    for (i = 0; i < nfft; ++i)
+    {
       const double pi =
           3.141592653589793238462643383279502884197169399375105820974944;
       double phase = -2 * pi * i / nfft;
@@ -329,8 +360,10 @@ kiss_fft_cfg kiss_fft_alloc(int nfft, int inverse_fft, void *mem,
 }
 
 void kiss_fft_stride(kiss_fft_cfg st, const kiss_fft_cpx *fin,
-                     kiss_fft_cpx *fout, int in_stride) {
-  if (fin == fout) {
+                     kiss_fft_cpx *fout, int in_stride)
+{
+  if (fin == fout)
+  {
     // NOTE: this is not really an in-place FFT algorithm.
     // It just performs an out-of-place FFT into a temp buffer
     kiss_fft_cpx *tmpbuf =
@@ -338,21 +371,27 @@ void kiss_fft_stride(kiss_fft_cfg st, const kiss_fft_cpx *fin,
     kf_work(tmpbuf, fin, 1, in_stride, st->factors, st);
     memcpy(fout, tmpbuf, sizeof(kiss_fft_cpx) * st->nfft);
     KISS_FFT_FREE(tmpbuf);
-  } else {
+  }
+  else
+  {
     kf_work(fout, fin, 1, in_stride, st->factors, st);
   }
 }
 
-void kiss_fft(kiss_fft_cfg cfg, const kiss_fft_cpx *fin, kiss_fft_cpx *fout) {
+void kiss_fft(kiss_fft_cfg cfg, const kiss_fft_cpx *fin, kiss_fft_cpx *fout)
+{
   kiss_fft_stride(cfg, fin, fout, 1);
 }
 
-void kiss_fft_cleanup(void) {
+void kiss_fft_cleanup(void)
+{
   // nothing needed for standard alloc
 }
 
-int kiss_fft_next_fast_size(int n) {
-  while (1) {
+int kiss_fft_next_fast_size(int n)
+{
+  while (1)
+  {
     int m = n;
     while ((m % 2) == 0)
       m /= 2;
