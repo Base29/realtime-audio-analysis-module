@@ -32,8 +32,11 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
 
             engine.start(bufferSize, sampleRate, callbackRateHz, emitFft)
             promise.resolve(null)
+        } catch (e: SecurityException) {
+            promise.reject("E_PERMISSION_DENIED", "Microphone permission denied: ${e.message}", e)
         } catch (e: Exception) {
-            promise.reject("E_START_FAILED", e.message, e)
+            val errorMessage = e.message ?: "Unknown error occurred"
+            promise.reject("E_START_FAILED", errorMessage, e)
         }
     }
 

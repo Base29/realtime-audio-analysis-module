@@ -35,11 +35,16 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
         val bufferSize: Int
     )
 
+    private var libraryLoaded = false
+
     init {
         try {
             System.loadLibrary("realtimeaudioanalyzer")
+            libraryLoaded = true
+            Log.d(TAG, "Native library loaded successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load C++ library", e)
+            libraryLoaded = false
         }
     }
 
@@ -53,7 +58,14 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
         callbackRateHz: Int,
         emitFft: Boolean
     ) {
-        if (isRunning) return
+        if (isRunning) {
+            Log.w(TAG, "Audio engine already running")
+            return
+        }
+        
+        if (!libraryLoaded) {
+            throw Exception("Native library not loaded. Cannot start audio engine.")
+        }
 
         this.bufferSize = bufferSize
         this.sampleRate = sampleRate
@@ -149,6 +161,24 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
             val record = audioRecord ?: break
             val readCount = record.read(readBuffer, 0, bufferSize)
 
+            if (readCount < 0) {
+                // Error reading audio
+                when (readCount) {
+                    AudioRecord.ERROR_INVALID_OPERATION -> {
+                        Log.e(TAG, "AudioRecord.ERROR_INVALID_OPERATION")
+                        break
+                    }
+                    AudioRecord.ERROR_BAD_VALUE -> {
+                        Log.e(TAG, "AudioRecord.ERROR_BAD_VALUE")
+                        break
+                    }
+                    else -> {
+                        Log.e(TAG, "AudioRecord read error: $readCount")
+                        break
+                    }
+                }
+            }
+
             if (readCount > 0) {
                 // Convert to float [-1.0, 1.0] and compute inline stats
                 var sumSq = 0.0f
@@ -205,7 +235,16 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
                         // Let's safe guard:
                         val safeFftSize = kotlin.math.min(currentFftSize, readCount)
                         
-                        computeFft(floatBuffer, fftOutput, safeFftSize)
+                        try {
+                            computeFft(floatBuffer, fftOutput, safeFftSize)
+                        } catch (e: UnsatisfiedLinkError) {
+                            Log.e(TAG, "JNI method not found - library may not be loaded", e)
+                            break
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error computing FFT", e)
+                            // Continue without FFT data
+                            fftData = null
+                        }
                         
                         // Downsampling
                         if (downsampleBins > 0 && downsampleBins < neededSize) {

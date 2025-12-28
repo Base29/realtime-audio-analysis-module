@@ -37,13 +37,14 @@ export const AudioVisualizer = () => {
     const [fftData, setFftData] = useState<number[]>(new Array(BAR_COUNT).fill(0));
     const [rms, setRms] = useState(0);
     const [peak, setPeak] = useState(0);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         checkPermissions();
         return () => stopAnalysis();
     }, []);
 
-    const checkPermissions = async () => {
+    const checkPermissions = async (): Promise<boolean> => {
         if (Platform.OS === 'android') {
             const granted = await PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -57,20 +58,30 @@ export const AudioVisualizer = () => {
             );
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
                 setHasPermission(true);
+                return true;
             } else {
                 console.warn('Microphone permission denied');
+                setHasPermission(false);
+                return false;
             }
         } else {
             // iOS permissions are handled by the module start() automatically 
             // or check AVAudioSession manually. Module handles rejection gracefully.
             setHasPermission(true);
+            return true;
         }
     };
 
     const startAnalysis = async () => {
         try {
+            setError(null);
+            
             if (!hasPermission) {
-                await checkPermissions();
+                const granted = await checkPermissions();
+                if (!granted) {
+                    setError('Microphone permission is required');
+                    return;
+                }
             }
 
             // 1. Subscribe to events
@@ -90,8 +101,11 @@ export const AudioVisualizer = () => {
             await RealtimeAudioAnalyzer.setSmoothing(true, 0.5); // Smooth out jitter
 
             setIsRecording(true);
-        } catch (e) {
+        } catch (e: any) {
+            const errorMsg = e?.message || 'Failed to start audio analysis';
             console.error('Failed to start analysis:', e);
+            setError(errorMsg);
+            setIsRecording(false);
         }
     };
 
@@ -158,6 +172,13 @@ export const AudioVisualizer = () => {
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Real-Time Audio Analyzer</Text>
+            
+            {/* Error Message */}
+            {error && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            )}
 
             {/* 1. RMS / Peak Circle Indicator */}
             <View style={styles.meterContainer}>
@@ -271,5 +292,17 @@ const styles = StyleSheet.create({
         color: '#000',
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    errorContainer: {
+        backgroundColor: '#ff4444',
+        padding: 10,
+        marginHorizontal: 20,
+        marginTop: 10,
+        borderRadius: 5,
+    },
+    errorText: {
+        color: '#fff',
+        fontSize: 14,
+        textAlign: 'center',
     },
 });

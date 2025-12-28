@@ -22,6 +22,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_realtimeaudio_AudioEngine_computeFft(
     if (cfg)
       free(cfg);
     cfg = kiss_fftr_alloc(nfft, 0, nullptr, nullptr);
+    if (cfg == nullptr) {
+      // FFT allocation failed
+      return;
+    }
     current_nfft = nfft;
 
     // Precompute Hann Window
@@ -37,6 +41,18 @@ extern "C" JNIEXPORT void JNICALL Java_com_realtimeaudio_AudioEngine_computeFft(
   // 2. Get input data
   jfloat *inData = env->GetFloatArrayElements(input, nullptr);
   jfloat *outData = env->GetFloatArrayElements(output, nullptr);
+  
+  if (inData == nullptr || outData == nullptr) {
+    if (inData != nullptr) env->ReleaseFloatArrayElements(input, inData, 0);
+    if (outData != nullptr) env->ReleaseFloatArrayElements(output, outData, 0);
+    return;
+  }
+  
+  if (cfg == nullptr) {
+    env->ReleaseFloatArrayElements(input, inData, 0);
+    env->ReleaseFloatArrayElements(output, outData, 0);
+    return;
+  }
 
   // 3. Apply Window
   for (int i = 0; i < nfft; ++i) {
