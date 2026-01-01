@@ -5,8 +5,8 @@
 ### 1. Determine Your Package Location
 
 First, identify where your package is located:
-- `node_modules/react-native-realtime-audio-analysis` (if installed via npm/yarn)
-- `local_modules/react-native-realtime-audio-analysis` (if in custom directory)
+- `node_modules/realtime-audio-analysis-module` (if installed via npm/yarn)
+- `local_modules/realtime-audio-analysis-module` (if in custom directory)
 - Absolute path to the module directory
 
 ### 2. Manual Linking (Most Reliable for Local Packages)
@@ -20,13 +20,13 @@ Add at the end. **Choose the path that matches your setup:**
 **If package is in `node_modules`:**
 ```gradle
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/realtime-audio-analysis-module/android')
 ```
 
 **If package is in `local_modules`:**
 ```gradle
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/realtime-audio-analysis-module/android')
 ```
 
 **If using absolute path:**
@@ -116,10 +116,10 @@ For local packages, manual linking is often more reliable because:
 1. **Verify package is installed:**
    ```bash
    # Check in node_modules
-   ls node_modules/react-native-realtime-audio-analysis/android
+   ls node_modules/realtime-audio-analysis-module/android
    
    # OR check in local_modules
-   ls local_modules/react-native-realtime-audio-analysis/android
+   ls local_modules/realtime-audio-analysis-module/android
    
    # OR check the path specified in your package.json
    ```

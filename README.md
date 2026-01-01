@@ -28,12 +28,20 @@ cd ios && pod install
 ```
 
 **Permissions**:
-Requires microphone access. See [Usage Guide](Usage-Guide.md#2-permissions-critical) for details.
+Requires microphone access. See [Usage Guide](docs/Usage-Guide.md#2-permissions-critical) for details.
 
 ## 📖 Documentation
 
-- **[Usage Guide](Usage-Guide.md)**: Full API reference, permission handling, and configuration details.
+### Getting Started
+- **[Usage Guide](docs/Usage-Guide.md)**: Full API reference, permission handling, and configuration details.
+- **[Local Installation Guide](docs/LOCAL_INSTALL.md)**: Step-by-step guide for installing and using this module as a local package.
 - **[Example Visualizer](examples/AudioVisualizer.tsx)**: A complete, copy-pasteable React Native component for a Spectrum Analyzer and Volume Meter.
+
+### Troubleshooting & Linking
+- **[Quick Fix Guide](docs/QUICK_FIX.md)**: Quick steps to fix module linking issues (most common problem).
+- **[Linking Fix Summary](docs/LINKING_FIX_SUMMARY.md)**: Complete summary of linking fixes and what was changed.
+- **[Verify Linking](docs/VERIFY_LINKING.md)**: Detailed step-by-step guide to verify and troubleshoot module linking.
+- **[Path Configuration](docs/PATH_CONFIGURATION.md)**: Guide for configuring correct paths when linking manually (especially for local packages).
 
 ## ⚡ Quick Start
 

@@ -33,13 +33,13 @@ For local packages, **manual linking is the most reliable approach**. Follow `QU
    **If package is in `node_modules`:**
    ```gradle
    include ':react-native-realtime-audio-analysis'
-   project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+   project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/realtime-audio-analysis-module/android')
    ```
    
    **If package is in `local_modules` (or custom directory):**
    ```gradle
    include ':react-native-realtime-audio-analysis'
-   project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+   project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/realtime-audio-analysis-module/android')
    ```
    
    **Or use absolute path:**

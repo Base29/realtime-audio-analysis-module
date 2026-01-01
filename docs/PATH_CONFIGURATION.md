@@ -10,10 +10,10 @@ First, determine where the package is located:
 # In your React Native app root directory
 
 # Check if in node_modules
-ls node_modules/react-native-realtime-audio-analysis
+ls node_modules/realtime-audio-analysis-module
 
 # OR check if in local_modules
-ls local_modules/react-native-realtime-audio-analysis
+ls local_modules/realtime-audio-analysis-module
 
 # OR check your package.json to see the dependency path
 cat package.json | grep realtime-audio-analysis
@@ -25,14 +25,14 @@ cat package.json | grep realtime-audio-analysis
 
 ```gradle
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/realtime-audio-analysis-module/android')
 ```
 
 ### Option 2: Package in `local_modules` (Custom directory)
 
 ```gradle
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/realtime-audio-analysis-module/android')
 ```
 
 ### Option 3: Absolute Path (Most reliable for local development)
@@ -69,7 +69,7 @@ project(':react-native-realtime-audio-analysis').projectDir = new File(rootProje
      }
    }
    ```
-   The path after `file:` tells you where it is.
+   The path after `file:` tells you the folder name (`realtime-audio-analysis-module`).
 
 3. **Use absolute path for certainty:**
    - Most reliable option
@@ -87,7 +87,7 @@ includeBuild('../node_modules/@react-native/gradle-plugin')
 
 // Add your module (choose the correct path option above)
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/realtime-audio-analysis-module/android')
 ```
 
 ## Verification
@@ -96,7 +96,7 @@ After adding the path, verify it's correct:
 
 ```bash
 # Check if the path exists
-ls -la ../local_modules/react-native-realtime-audio-analysis/android
+ls -la ../local_modules/realtime-audio-analysis-module/android
 
 # Or with absolute path
 ls -la /absolute/path/to/realtime-audio-analysis-module/android
@@ -111,8 +111,8 @@ You should see the `build.gradle` file in that directory.
    - ✅ `'../local_modules/...'` when package is in `local_modules`
 
 2. **Missing `/android` suffix:**
-   - ❌ `'../local_modules/react-native-realtime-audio-analysis'`
-   - ✅ `'../local_modules/react-native-realtime-audio-analysis/android'`
+   - ❌ `'../local_modules/realtime-audio-analysis-module'`
+   - ✅ `'../local_modules/realtime-audio-analysis-module/android'`
 
 3. **Incorrect relative path:**
    - Make sure you're counting directory levels correctly

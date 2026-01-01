@@ -9,10 +9,10 @@ Check if the package is properly installed in your app:
 ```bash
 # In your React Native app root
 # Check in node_modules (if installed via npm/yarn)
-ls node_modules/react-native-realtime-audio-analysis
+ls node_modules/realtime-audio-analysis-module
 
 # OR check in local_modules (if in custom directory)
-ls local_modules/react-native-realtime-audio-analysis
+ls local_modules/realtime-audio-analysis-module
 
 # OR check the path from your package.json dependencies
 ```
@@ -44,13 +44,13 @@ The file should include your module (either automatically or manually). **Adjust
 **If in `node_modules`:**
 ```gradle
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/realtime-audio-analysis-module/android')
 ```
 
 **If in `local_modules`:**
 ```gradle
 include ':react-native-realtime-audio-analysis'
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/realtime-audio-analysis-module/android')
 ```
 
 **If using absolute path:**
@@ -117,9 +117,9 @@ includeBuild('../node_modules/@react-native/gradle-plugin')
 // Add this line (adjust path based on your package location):
 include ':react-native-realtime-audio-analysis'
 // For node_modules:
-project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/realtime-audio-analysis-module/android')
 // OR for local_modules:
-// project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+// project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/realtime-audio-analysis-module/android')
 // OR for absolute path:
 // project(':react-native-realtime-audio-analysis').projectDir = new File('/absolute/path/to/realtime-audio-analysis-module/android')
 ```
