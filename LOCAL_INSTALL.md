@@ -28,10 +28,18 @@ React Native should automatically detect and link the package. However, if it do
    ```
 
 2. **Verify autolinking:**
-   Check `android/settings.gradle` - it should include:
+   Check `android/settings.gradle` - it should include. **Adjust path based on where package is installed:**
+   
+   **If in `node_modules`:**
    ```gradle
    include ':react-native-realtime-audio-analysis'
    project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+   ```
+   
+   **If in `local_modules`:**
+   ```gradle
+   include ':react-native-realtime-audio-analysis'
+   project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
    ```
 
 3. **Verify MainApplication:**
@@ -46,9 +54,25 @@ React Native should automatically detect and link the package. However, if it do
 #### Option B: Manual Linking (If autolinking fails)
 
 1. **Add to `android/settings.gradle`:**
+   
+   **Choose the path that matches your package location:**
+   
+   **If in `node_modules`:**
    ```gradle
    include ':react-native-realtime-audio-analysis'
    project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-realtime-audio-analysis/android')
+   ```
+   
+   **If in `local_modules`:**
+   ```gradle
+   include ':react-native-realtime-audio-analysis'
+   project(':react-native-realtime-audio-analysis').projectDir = new File(rootProject.projectDir, '../local_modules/react-native-realtime-audio-analysis/android')
+   ```
+   
+   **If using absolute path:**
+   ```gradle
+   include ':react-native-realtime-audio-analysis'
+   project(':react-native-realtime-audio-analysis').projectDir = new File('/absolute/path/to/realtime-audio-analysis-module/android')
    ```
 
 2. **Add to `android/app/build.gradle`:**
