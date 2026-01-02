@@ -2,7 +2,7 @@
 /.vscode*
 /.vscode
 node_modules
-.kiro
+.kiro/
 /.kiro*
 /.kiro
 .kiro*
