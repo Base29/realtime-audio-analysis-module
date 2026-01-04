@@ -148,7 +148,6 @@ ${options.projectRoot}/
    * Generates Android MainApplication configuration guide
    */
   private generateAndroidMainApplicationGuide(options: ManualGuideOptions): string {
-    const relativePath = path.relative(options.projectRoot, options.moduleConfig.modulePath);
     
     return `
 **Step 1: Locate MainApplication File**
@@ -650,7 +649,7 @@ npx rn-module-link verify
   /**
    * Generates next steps section
    */
-  private generateNextStepsSection(options: ManualGuideOptions): GuideSection {
+  private generateNextStepsSection(_options: ManualGuideOptions): GuideSection {
     const content = `
 Congratulations! You have successfully linked the react-native-realtime-audio-analysis module to your project.
 
@@ -817,4 +816,3 @@ export function generateManualGuide(
   return generator.generateProjectGuide(projectRoot, platform, outputPath);
 }
 
-export { ManualLinkingGuideGenerator };

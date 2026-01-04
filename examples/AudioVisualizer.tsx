@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,13 +12,11 @@ import {
 import {
     RealtimeAudioAnalyzer,
     AudioAnalysisEvent,
-} from 'react-native-realtime-audio-analysis';
+} from '../src/index';
 
 // Configuration
 const FFT_SIZE = 1024;
 const BAR_COUNT = 32; // Number of bars to display
-const MIN_DB = -60; // Noise floor for normalization
-const MAX_DB = 0;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,7 +39,9 @@ export const AudioVisualizer = () => {
 
     useEffect(() => {
         checkPermissions();
-        return () => stopAnalysis();
+        return () => {
+            stopAnalysis();
+        };
     }, []);
 
     const checkPermissions = async (): Promise<boolean> => {
@@ -146,7 +146,6 @@ export const AudioVisualizer = () => {
                     const height = Math.min(magnitude * 250, 200);
 
                     // Color gradient logic based on index or height
-                    const opacity = 0.5 + magnitude * 0.5;
                     const green = 255 - (index / BAR_COUNT) * 100;
                     const blue = (index / BAR_COUNT) * 255;
                     const color = `rgba(0, ${green}, ${blue}, 1)`;

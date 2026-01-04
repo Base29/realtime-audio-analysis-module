@@ -2,6 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PathResolver, detectModule } from '../path-resolver';
 
+// Type alias for compatibility
+type PathLikeCompat = fs.PathOrFileDescriptor;
+
 // Mock fs module for testing
 jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
@@ -23,7 +26,7 @@ describe('PathResolver', () => {
       const javaPath = path.join(srcMainPath, 'java');
 
       // Mock file system structure
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         return pathStr === modulePath ||
                pathStr === androidPath ||
@@ -59,7 +62,7 @@ describe('PathResolver', () => {
       const srcMainPath = path.join(androidPath, 'src', 'main');
       const javaPath = path.join(srcMainPath, 'java');
 
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         return pathStr === modulePath ||
                pathStr === androidPath ||
@@ -132,7 +135,7 @@ describe('Convenience functions', () => {
       const srcMainPath = path.join(androidPath, 'src', 'main');
       const javaPath = path.join(srcMainPath, 'java');
 
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         return pathStr === modulePath ||
                pathStr === androidPath ||

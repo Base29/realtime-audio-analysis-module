@@ -85,5 +85,4 @@ export declare class ManualLinkingGuideGenerator {
  * Convenience function to generate a manual linking guide
  */
 export declare function generateManualGuide(projectRoot: string, platform?: 'android' | 'ios' | 'both', outputPath?: string): string;
-export { ManualLinkingGuideGenerator };
 //# sourceMappingURL=manual-guide.d.ts.map

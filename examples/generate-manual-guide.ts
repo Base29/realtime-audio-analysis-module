@@ -5,7 +5,6 @@
  * This can be used as a standalone script or integrated into build processes
  */
 
-import * as path from 'path';
 import { generateManualGuide } from '../src/linking';
 
 async function main(): Promise<void> {

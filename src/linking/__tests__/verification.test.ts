@@ -2,6 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ModuleLinkingVerifier, verifyModuleLinking, generateDiagnostics } from '../verification';
 
+// Type alias for compatibility
+type PathLikeCompat = fs.PathOrFileDescriptor;
+
 // Mock fs module for testing
 jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
@@ -22,7 +25,7 @@ describe('ModuleLinkingVerifier', () => {
       const androidPath = path.join(modulePath, 'android');
       const mainAppPath = path.join(mockProjectRoot, 'android', 'app', 'src', 'main', 'java', 'com', 'example', 'MainApplication.kt');
       
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         return pathStr === modulePath ||
                pathStr === androidPath ||
@@ -41,7 +44,7 @@ describe('ModuleLinkingVerifier', () => {
                pathStr === path.join(modulePath, 'index.js');
       });
 
-      mockFs.statSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.statSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         if (pathStr.includes('MainApplication.kt') || pathStr.includes('MainApplication.java')) {
           return { isDirectory: () => false } as any;
@@ -70,7 +73,7 @@ describe('ModuleLinkingVerifier', () => {
       });
 
       // Mock file contents
-      mockFs.readFileSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.readFileSync.mockImplementation((filePath: fs.PathOrFileDescriptor) => {
         const pathStr = filePath.toString();
         if (pathStr.includes('MainApplication.kt')) {
           return `
@@ -136,7 +139,7 @@ describe('ModuleLinkingVerifier', () => {
       const androidPath = path.join(modulePath, 'android');
       const mainAppPath = path.join(mockProjectRoot, 'android', 'app', 'src', 'main', 'java', 'com', 'example', 'MainApplication.kt');
       
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         return pathStr === modulePath ||
                pathStr === androidPath ||
@@ -153,7 +156,7 @@ describe('ModuleLinkingVerifier', () => {
                pathStr === path.join(modulePath, 'index.js');
       });
 
-      mockFs.statSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.statSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         if (pathStr.includes('MainApplication.kt') || pathStr.includes('MainApplication.java')) {
           return { isDirectory: () => false } as any;
@@ -182,7 +185,7 @@ describe('ModuleLinkingVerifier', () => {
       });
 
       // Mock MainApplication without proper registration
-      mockFs.readFileSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.readFileSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         if (pathStr.includes('MainApplication.kt')) {
           return `
@@ -222,7 +225,7 @@ describe('ModuleLinkingVerifier', () => {
       const modulePath = path.join(mockProjectRoot, 'node_modules', 'react-native-realtime-audio-analysis');
       const androidPath = path.join(modulePath, 'android');
       
-      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         return pathStr === modulePath ||
                pathStr === androidPath ||
@@ -232,7 +235,7 @@ describe('ModuleLinkingVerifier', () => {
                pathStr === path.join(mockProjectRoot, 'package.json');
       });
 
-      mockFs.statSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.statSync.mockImplementation((filePath: PathLikeCompat) => {
         const pathStr = filePath.toString();
         if (pathStr.includes('MainApplication.kt') || pathStr.includes('MainApplication.java')) {
           return { isDirectory: () => false } as any;
@@ -240,7 +243,7 @@ describe('ModuleLinkingVerifier', () => {
         return { isDirectory: () => true } as any;
       });
       mockFs.readdirSync.mockReturnValue(['RealtimeAudioAnalyzer.swift'] as any);
-      mockFs.readFileSync.mockImplementation((filePath: fs.PathLike) => {
+      mockFs.readFileSync.mockImplementation((filePath: PathLikeCompat) => {
         if (filePath.toString().includes('package.json')) {
           return JSON.stringify({
             name: 'test-project',

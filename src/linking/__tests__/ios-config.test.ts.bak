@@ -42,7 +42,7 @@ end
 
 
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === path.join(mockProjectRoot, 'ios') ||
                pathStr === mockPodfilePath;
@@ -79,7 +79,7 @@ target 'MyApp' do
 end
 `;
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === path.join(mockProjectRoot, 'ios') ||
                pathStr === mockPodfilePath;
@@ -111,7 +111,7 @@ platform :ios, '11.0'
 pod 'React-Core', :path => '../node_modules/react-native/'
 `;
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === path.join(mockProjectRoot, 'ios') ||
                pathStr === mockPodfilePath;
@@ -132,7 +132,7 @@ pod 'React-Core', :path => '../node_modules/react-native/'
     it('should handle empty Podfile', () => {
       const mockPodfileContent = '';
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === path.join(mockProjectRoot, 'ios') ||
                pathStr === mockPodfilePath;
@@ -156,7 +156,7 @@ pod 'React-Core', :path => '../node_modules/react-native/'
       const iosPath = path.join(mockProjectRoot, 'ios');
       const podfilePath = path.join(iosPath, 'Podfile');
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === iosPath || pathStr === podfilePath;
       });
@@ -181,7 +181,7 @@ pod 'React-Core', :path => '../node_modules/react-native/'
     it('should return error when Podfile not found', () => {
       const iosPath = path.join(mockProjectRoot, 'ios');
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === iosPath;
       });
@@ -205,7 +205,7 @@ target 'MyApp' do
 end
 `;
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === path.join(mockProjectRoot, 'ios') ||
                pathStr === mockPodfilePath;
@@ -251,7 +251,7 @@ describe('Convenience functions', () => {
       const mockPodfilePath = path.join(mockProjectRoot, 'ios', 'Podfile');
       const mockContent = 'platform :ios, "11.0"';
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === path.join(mockProjectRoot, 'ios') ||
                pathStr === mockPodfilePath;
@@ -272,7 +272,7 @@ describe('Convenience functions', () => {
       const iosPath = path.join(mockProjectRoot, 'ios');
       const podfilePath = path.join(iosPath, 'Podfile');
 
-      mockFs.existsSync.mockImplementation((filePath: PathLikeCompat) => {
+      mockFs.existsSync.mockImplementation((filePath: fs.PathLike) => {
         const pathStr = filePath.toString();
         return pathStr === iosPath || pathStr === podfilePath;
       });

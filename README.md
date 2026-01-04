@@ -32,16 +32,26 @@ Requires microphone access. See [Usage Guide](docs/Usage-Guide.md#2-permissions-
 
 ## 📖 Documentation
 
-### Getting Started
-- **[Usage Guide](docs/Usage-Guide.md)**: Full API reference, permission handling, and configuration details.
-- **[Local Installation Guide](docs/LOCAL_INSTALL.md)**: Step-by-step guide for installing and using this module as a local package.
-- **[Example Visualizer](examples/AudioVisualizer.tsx)**: A complete, copy-pasteable React Native component for a Spectrum Analyzer and Volume Meter.
+**[📚 Complete Documentation Index](docs/README.md)** - Browse all available documentation
 
-### Troubleshooting & Linking
-- **[Quick Fix Guide](docs/QUICK_FIX.md)**: Quick steps to fix module linking issues (most common problem).
-- **[Linking Fix Summary](docs/LINKING_FIX_SUMMARY.md)**: Complete summary of linking fixes and what was changed.
-- **[Verify Linking](docs/VERIFY_LINKING.md)**: Detailed step-by-step guide to verify and troubleshoot module linking.
-- **[Path Configuration](docs/PATH_CONFIGURATION.md)**: Guide for configuring correct paths when linking manually (especially for local packages).
+### Getting Started
+- **[Quick Start Guide](docs/QUICK_START.md)**: Get up and running in minutes with simple examples
+- **[Usage Guide](docs/USAGE.md)**: Complete guide for using the module with Android and iOS
+- **[API Reference](docs/API_REFERENCE.md)**: Full API documentation with examples and type definitions
+- **[Manual Linking Guide](docs/MANUAL_LINKING.md)**: Step-by-step manual linking instructions for both platforms
+
+### CLI Tools & Automation
+- **[CLI Usage Guide](docs/CLI_USAGE.md)**: Automated linking and diagnostic tools
+- **[Verification Guide](docs/VERIFICATION.md)**: Testing and verifying your module setup
+
+### Installation & Setup
+- **[Local Installation Guide](docs/LOCAL_INSTALL.md)**: Installing and using this module as a local package
+- **[Path Configuration](docs/PATH_CONFIGURATION.md)**: Configuring correct paths for manual linking
+
+### Examples & Troubleshooting
+- **[Audio Visualizer Example](examples/AudioVisualizer.tsx)**: Complete React Native spectrum analyzer component
+- **[Quick Fix Guide](docs/QUICK_FIX.md)**: Quick steps to fix common module linking issues
+- **[Linking Fix Summary](docs/LINKING_FIX_SUMMARY.md)**: Summary of linking fixes and changes
 
 ## ⚡ Quick Start
 
