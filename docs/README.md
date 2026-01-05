@@ -10,6 +10,7 @@ Complete documentation for the react-native-realtime-audio-analysis module.
 - **[API Reference](API_REFERENCE.md)** - Full API documentation with examples
 
 ### 🔧 Installation & Setup
+- **[Autolinking Guide](AUTOLINKING.md)** - React Native autolinking compatibility and troubleshooting
 - **[Manual Linking Guide](MANUAL_LINKING.md)** - Step-by-step manual linking for both platforms
 - **[Local Installation Guide](LOCAL_INSTALL.md)** - Installing as a local package
 - **[Path Configuration](PATH_CONFIGURATION.md)** - Configuring paths for manual linking

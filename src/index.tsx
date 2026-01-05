@@ -1,74 +1,62 @@
-import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
-
-// Debug: Log all available native modules
-if (__DEV__) {
-    console.log('Available NativeModules:', Object.keys(NativeModules));
-    console.log('Looking for: RealtimeAudioAnalyzer');
-    console.log('Found module:', NativeModules.RealtimeAudioAnalyzer ? 'YES' : 'NO');
-}
+import { NativeModules, Platform } from 'react-native';
 
 const LINKING_ERROR =
-    `The package 'react-native-realtime-audio-analysis' doesn't seem to be linked. Make sure: \n\n` +
-    Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
-    '- You rebuilt the app after installing the package\n' +
-    '- You are not using Expo Go\n' +
-    (__DEV__ ? `\n\nDebug Info:\n- Available modules: ${Object.keys(NativeModules).join(', ')}\n- Module path: ${Platform.OS === 'android' ? 'android/src/main/java/com/realtimeaudio' : 'ios'}` : '');
+  `The package 'react-native-realtime-audio-analysis' doesn't seem to be linked. Make sure: \n\n` +
+  Platform.select({ ios: "- You have run 'cd ios && pod install'\n", default: '' }) +
+  '- You rebuilt the app after installing the package\n' +
+  '- You are not using Expo Go\n';
 
-const RealtimeAudioAnalyzerModule = NativeModules.RealtimeAudioAnalyzer
-    ? NativeModules.RealtimeAudioAnalyzer
-    : new Proxy(
-        {},
-        {
-            get() {
-                throw new Error(LINKING_ERROR);
-            },
-        }
+// @ts-expect-error
+const isTurboModuleEnabled = global.__turboModuleProxy != null;
+
+const RealtimeAudioAnalysisModule = isTurboModuleEnabled
+  ? require('./NativeRealtimeAudioAnalysis').default
+  : NativeModules.RealtimeAudioAnalysis;
+
+const RealtimeAudioAnalyzer = RealtimeAudioAnalysisModule
+  ? RealtimeAudioAnalysisModule
+  : new Proxy(
+      {},
+      {
+        get() {
+          throw new Error(LINKING_ERROR);
+        },
+      }
     );
 
+export interface AnalysisConfig {
+  fftSize?: number;
+  sampleRate?: number;
+  windowFunction?: 'hanning' | 'hamming' | 'blackman' | 'rectangular';
+  smoothing?: number;
+}
+
 export interface AudioAnalysisEvent {
-    timestamp: number;
-    rms: number;
-    peak: number;
-    fft: number[];
-    sampleRate: number;
-    bufferSize: number;
+  frequencyData: number[];
+  timeData: number[];
+  volume: number;
+  peak: number;
+  timestamp: number;
 }
 
-export interface StartOptions {
-    bufferSize?: number; // default 1024
-    sampleRate?: number; // preferred, default 44100
-    callbackRateHz?: number; // default 30
-    emitFft?: boolean; // default true
-}
+export default {
+  startAnalysis(config?: AnalysisConfig): Promise<void> {
+    return RealtimeAudioAnalyzer.startAnalysis(config || {});
+  },
 
-const eventEmitter = new NativeEventEmitter(RealtimeAudioAnalyzerModule);
+  stopAnalysis(): Promise<void> {
+    return RealtimeAudioAnalyzer.stopAnalysis();
+  },
 
-export const RealtimeAudioAnalyzer = {
-    start(options: StartOptions = {}): Promise<void> {
-        return RealtimeAudioAnalyzerModule.start(options);
-    },
+  isAnalyzing(): Promise<boolean> {
+    return RealtimeAudioAnalyzer.isAnalyzing();
+  },
 
-    stop(): Promise<void> {
-        return RealtimeAudioAnalyzerModule.stop();
-    },
+  getAnalysisConfig(): Promise<AnalysisConfig> {
+    return RealtimeAudioAnalyzer.getAnalysisConfig();
+  },
 
-    isRunning(): Promise<boolean> {
-        return RealtimeAudioAnalyzerModule.isRunning();
-    },
-
-    setSmoothing(enabled: boolean, factor: number = 0.5): Promise<void> {
-        return RealtimeAudioAnalyzerModule.setSmoothing(enabled, factor);
-    },
-
-    setFftConfig(fftSize: number, downsampleBins: number = -1): Promise<void> {
-        return RealtimeAudioAnalyzerModule.setFftConfig(fftSize, downsampleBins);
-    },
-
-    addListener(callback: (event: AudioAnalysisEvent) => void) {
-        return eventEmitter.addListener('RealtimeAudioAnalyzer:onData', callback);
-    },
-
-    removeAllListeners() {
-        eventEmitter.removeAllListeners('RealtimeAudioAnalyzer:onData');
-    },
+  // Event emitter methods
+  addListener: RealtimeAudioAnalyzer.addListener?.bind(RealtimeAudioAnalyzer),
+  removeListeners: RealtimeAudioAnalyzer.removeListeners?.bind(RealtimeAudioAnalyzer),
 };

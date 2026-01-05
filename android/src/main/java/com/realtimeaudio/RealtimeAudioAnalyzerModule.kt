@@ -15,20 +15,17 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
     private val engine = AudioEngine { data -> sendEvent(data) }
 
     override fun getName(): String {
-        return "RealtimeAudioAnalyzer"
+        return "RealtimeAudioAnalysis"  // Changed to match JavaScript expectation
     }
 
+    // Add the methods that JavaScript expects
     @ReactMethod
-    fun start(options: ReadableMap, promise: Promise) {
-        // Permissions check
+    fun startAnalysis(config: ReadableMap, promise: Promise) {
         try {
-            // Note: Modern RN has PermissionAndroid, but native checks good too
-            // Assuming Permission is granted by JS layer check or App manifest
-            
-            val bufferSize = if (options.hasKey("bufferSize")) options.getInt("bufferSize") else 1024
-            val sampleRate = if (options.hasKey("sampleRate")) options.getInt("sampleRate") else 44100
-            val callbackRateHz = if (options.hasKey("callbackRateHz")) options.getInt("callbackRateHz") else 30
-            val emitFft = if (options.hasKey("emitFft")) options.getBoolean("emitFft") else true
+            val bufferSize = if (config.hasKey("fftSize")) config.getInt("fftSize") else 1024
+            val sampleRate = if (config.hasKey("sampleRate")) config.getInt("sampleRate") else 44100
+            val callbackRateHz = 30 // Default callback rate
+            val emitFft = true
 
             engine.start(bufferSize, sampleRate, callbackRateHz, emitFft)
             promise.resolve(null)
@@ -41,14 +38,41 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
     }
 
     @ReactMethod
-    fun stop(promise: Promise) {
+    fun stopAnalysis(promise: Promise) {
         engine.stop()
         promise.resolve(null)
     }
 
     @ReactMethod
-    fun isRunning(promise: Promise) {
+    fun isAnalyzing(promise: Promise) {
         promise.resolve(engine.isRecording())
+    }
+
+    @ReactMethod
+    fun getAnalysisConfig(promise: Promise) {
+        val config = Arguments.createMap().apply {
+            putInt("fftSize", 1024)
+            putInt("sampleRate", 44100)
+            putString("windowFunction", "hanning")
+            putDouble("smoothing", 0.8)
+        }
+        promise.resolve(config)
+    }
+
+    // Keep the original methods for backward compatibility
+    @ReactMethod
+    fun start(options: ReadableMap, promise: Promise) {
+        startAnalysis(options, promise)
+    }
+
+    @ReactMethod
+    fun stop(promise: Promise) {
+        stopAnalysis(promise)
+    }
+
+    @ReactMethod
+    fun isRunning(promise: Promise) {
+        isAnalyzing(promise)
     }
 
     @ReactMethod
@@ -78,22 +102,29 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
 
         val params = Arguments.createMap().apply {
             putDouble("timestamp", data.timestamp)
-            putDouble("rms", data.rms)
+            putDouble("volume", data.rms)  // Map rms to volume for consistency
             putDouble("peak", data.peak)
             putInt("sampleRate", data.sampleRate)
-            putInt("bufferSize", data.bufferSize)
+            putInt("fftSize", data.bufferSize)  // Map bufferSize to fftSize
 
             if (data.fft != null) {
                 val fftArray = Arguments.createArray()
                 for (value in data.fft) {
                     fftArray.pushDouble(value.toDouble())
                 }
-                putArray("fft", fftArray)
+                putArray("frequencyData", fftArray)  // Map fft to frequencyData
+                putArray("timeData", Arguments.createArray())  // Add empty timeData for now
             } else {
-                putArray("fft", Arguments.createArray())
+                putArray("frequencyData", Arguments.createArray())
+                putArray("timeData", Arguments.createArray())
             }
         }
 
+        // Send to both event names for compatibility
+        reactApplicationContext
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            .emit("AudioAnalysisData", params)
+            
         reactApplicationContext
             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
             .emit("RealtimeAudioAnalyzer:onData", params)

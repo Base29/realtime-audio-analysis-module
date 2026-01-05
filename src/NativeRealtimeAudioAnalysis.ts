@@ -1,0 +1,11 @@
+import type { TurboModule } from 'react-native';
+import { TurboModuleRegistry } from 'react-native';
+
+export interface Spec extends TurboModule {
+  startAnalysis(config: Object): Promise<void>;
+  stopAnalysis(): Promise<void>;
+  isAnalyzing(): Promise<boolean>;
+  getAnalysisConfig(): Promise<Object>;
+}
+
+export default TurboModuleRegistry.getEnforcing<Spec>('RealtimeAudioAnalysis');

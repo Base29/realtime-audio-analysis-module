@@ -41,6 +41,7 @@ Requires microphone access. See [Usage Guide](docs/Usage-Guide.md#2-permissions-
 - **[Manual Linking Guide](docs/MANUAL_LINKING.md)**: Step-by-step manual linking instructions for both platforms
 
 ### CLI Tools & Automation
+- **[Autolinking Guide](docs/AUTOLINKING.md)**: React Native autolinking compatibility and troubleshooting
 - **[CLI Usage Guide](docs/CLI_USAGE.md)**: Automated linking and diagnostic tools
 - **[Verification Guide](docs/VERIFICATION.md)**: Testing and verifying your module setup
 

@@ -76,7 +76,7 @@
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": ">=0.68.0"
   },
   "jest": {
     "testEnvironment": "node",
@@ -120,5 +120,10 @@
         }
       ]
     ]
+  },
+  "codegenConfig": {
+    "name": "RealtimeAudioAnalyzerSpec",
+    "type": "modules",
+    "jsSrcsDir": "src"
   }
 }
