@@ -120,10 +120,20 @@ export const AudioVisualizer = () => {
         setRms(data.rms || data.volume || 0);
         setPeak(data.peak || 0);
 
-        // Data.fft is an array of 0.0 - 1.0 (linear magnitude)
-        // We can use it directly for bar heights
-        if (data.fft && data.fft.length > 0) {
-            setFftData(data.fft);
+        // Use frequencyData (mapped from native fft) or fallback to fft for compatibility
+        const fftArray = data.frequencyData || data.fft;
+        if (fftArray && fftArray.length > 0) {
+            // Downsample to BAR_COUNT if needed
+            if (fftArray.length > BAR_COUNT) {
+                const step = Math.floor(fftArray.length / BAR_COUNT);
+                const downsampled = [];
+                for (let i = 0; i < BAR_COUNT; i++) {
+                    downsampled.push(fftArray[i * step]);
+                }
+                setFftData(downsampled);
+            } else {
+                setFftData(fftArray.slice(0, BAR_COUNT));
+            }
         }
     }, []);
 
