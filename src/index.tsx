@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 
 const LINKING_ERROR =
   `The package 'react-native-realtime-audio-analysis' doesn't seem to be linked. Make sure: \n\n` +
@@ -6,23 +6,13 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-// @ts-expect-error
-const isTurboModuleEnabled = global.__turboModuleProxy != null;
+// Get the native module - try both possible names
+const RealtimeAudioAnalysisModule = NativeModules.RealtimeAudioAnalysis || NativeModules.RealtimeAudioAnalyzer;
 
-const RealtimeAudioAnalysisModule = isTurboModuleEnabled
-  ? require('./NativeRealtimeAudioAnalysis').default
-  : NativeModules.RealtimeAudioAnalysis;
-
-const RealtimeAudioAnalyzer = RealtimeAudioAnalysisModule
-  ? RealtimeAudioAnalysisModule
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
+if (!RealtimeAudioAnalysisModule) {
+  console.error('Available NativeModules:', Object.keys(NativeModules).filter(key => key.includes('Audio') || key.includes('Realtime')));
+  throw new Error(LINKING_ERROR);
+}
 
 export interface AnalysisConfig {
   fftSize?: number;
@@ -37,26 +27,41 @@ export interface AudioAnalysisEvent {
   volume: number;
   peak: number;
   timestamp: number;
+  // Additional properties from native module
+  rms?: number;
+  fft?: number[];
 }
 
-export default {
+// Create event emitter
+const eventEmitter = new NativeEventEmitter(RealtimeAudioAnalysisModule);
+
+// Debug: Log available methods
+console.log('RealtimeAudioAnalysis native methods:', Object.keys(RealtimeAudioAnalysisModule));
+
+const RealtimeAudioAnalyzer = {
+  // Core methods
   startAnalysis(config?: AnalysisConfig): Promise<void> {
-    return RealtimeAudioAnalyzer.startAnalysis(config || {});
+    console.log('Calling startAnalysis with config:', config);
+    return RealtimeAudioAnalysisModule.startAnalysis(config || {});
   },
 
   stopAnalysis(): Promise<void> {
-    return RealtimeAudioAnalyzer.stopAnalysis();
+    console.log('Calling stopAnalysis');
+    return RealtimeAudioAnalysisModule.stopAnalysis();
   },
 
   isAnalyzing(): Promise<boolean> {
-    return RealtimeAudioAnalyzer.isAnalyzing();
+    return RealtimeAudioAnalysisModule.isAnalyzing();
   },
 
   getAnalysisConfig(): Promise<AnalysisConfig> {
-    return RealtimeAudioAnalyzer.getAnalysisConfig();
+    return RealtimeAudioAnalysisModule.getAnalysisConfig();
   },
 
   // Event emitter methods
-  addListener: RealtimeAudioAnalyzer.addListener?.bind(RealtimeAudioAnalyzer),
-  removeListeners: RealtimeAudioAnalyzer.removeListeners?.bind(RealtimeAudioAnalyzer),
+  addListener: eventEmitter.addListener.bind(eventEmitter),
+  removeListeners: eventEmitter.removeAllListeners.bind(eventEmitter),
+  removeSubscription: (subscription: any) => subscription.remove(),
 };
+
+export default RealtimeAudioAnalyzer;

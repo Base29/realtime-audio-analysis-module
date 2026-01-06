@@ -1,24 +1,26 @@
-export interface AudioAnalysisEvent {
-    timestamp: number;
-    rms: number;
-    peak: number;
-    fft: number[];
-    sampleRate: number;
-    bufferSize: number;
-}
-export interface StartOptions {
-    bufferSize?: number;
+export interface AnalysisConfig {
+    fftSize?: number;
     sampleRate?: number;
-    callbackRateHz?: number;
-    emitFft?: boolean;
+    windowFunction?: 'hanning' | 'hamming' | 'blackman' | 'rectangular';
+    smoothing?: number;
 }
-export declare const RealtimeAudioAnalyzer: {
-    start(options?: StartOptions): Promise<void>;
-    stop(): Promise<void>;
-    isRunning(): Promise<boolean>;
-    setSmoothing(enabled: boolean, factor?: number): Promise<void>;
-    setFftConfig(fftSize: number, downsampleBins?: number): Promise<void>;
-    addListener(callback: (event: AudioAnalysisEvent) => void): import("react-native").EmitterSubscription;
-    removeAllListeners(): void;
+export interface AudioAnalysisEvent {
+    frequencyData: number[];
+    timeData: number[];
+    volume: number;
+    peak: number;
+    timestamp: number;
+    rms?: number;
+    fft?: number[];
+}
+declare const RealtimeAudioAnalyzer: {
+    startAnalysis(config?: AnalysisConfig): Promise<void>;
+    stopAnalysis(): Promise<void>;
+    isAnalyzing(): Promise<boolean>;
+    getAnalysisConfig(): Promise<AnalysisConfig>;
+    addListener: (eventType: string, listener: (event: any) => void, context?: Object) => import("react-native").EmitterSubscription;
+    removeListeners: (eventType: string) => void;
+    removeSubscription: (subscription: any) => any;
 };
+export default RealtimeAudioAnalyzer;
 //# sourceMappingURL=index.d.ts.map

@@ -10,9 +10,9 @@ import {
     SafeAreaView,
 } from 'react-native';
 import {
-    RealtimeAudioAnalyzer,
     AudioAnalysisEvent,
 } from '../src/index';
+import RealtimeAudioAnalyzer from '../src/index';
 
 // Configuration
 const FFT_SIZE = 1024;
@@ -85,20 +85,13 @@ export const AudioVisualizer = () => {
             }
 
             // 1. Subscribe to events
-            RealtimeAudioAnalyzer.addListener(onAudioData);
+            RealtimeAudioAnalyzer.addListener('AudioAnalysisData', onAudioData);
 
             // 2. Start the engine
-            // We request downsampling to BAR_COUNT natively for performance!
-            await RealtimeAudioAnalyzer.start({
-                bufferSize: FFT_SIZE,
+            await RealtimeAudioAnalyzer.startAnalysis({
+                fftSize: FFT_SIZE,
                 sampleRate: 44100,
-                callbackRateHz: 30, // 30 FPS is good for UI
-                emitFft: true,
             });
-
-            // 3. Configure specific DSP settings
-            await RealtimeAudioAnalyzer.setFftConfig(FFT_SIZE, BAR_COUNT);
-            await RealtimeAudioAnalyzer.setSmoothing(true, 0.5); // Smooth out jitter
 
             setIsRecording(true);
         } catch (e: any) {
@@ -111,8 +104,8 @@ export const AudioVisualizer = () => {
 
     const stopAnalysis = async () => {
         try {
-            await RealtimeAudioAnalyzer.stop();
-            RealtimeAudioAnalyzer.removeAllListeners();
+            await RealtimeAudioAnalyzer.stopAnalysis();
+            RealtimeAudioAnalyzer.removeListeners('AudioAnalysisData');
             setIsRecording(false);
             // Reset visuals
             setRms(0);
@@ -124,8 +117,8 @@ export const AudioVisualizer = () => {
     };
 
     const onAudioData = useCallback((data: AudioAnalysisEvent) => {
-        setRms(data.rms);
-        setPeak(data.peak);
+        setRms(data.rms || data.volume || 0);
+        setPeak(data.peak || 0);
 
         // Data.fft is an array of 0.0 - 1.0 (linear magnitude)
         // We can use it directly for bar heights
