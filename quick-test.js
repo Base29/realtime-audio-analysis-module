@@ -91,8 +91,26 @@ try {
   
 } catch (error) {
   console.log('❌ Test failed:', error.message);
-  console.log('\n💡 Troubleshooting:');
-  console.log('1. Make sure you are running this from your React Native project root');
-  console.log('2. Ensure the module is installed: npm install /path/to/realtime-audio-analysis-module');
-  console.log('3. Check that node_modules/react-native-realtime-audio-analysis exists');
+  
+  if (error.message.includes('Unexpected token')) {
+    console.log('\n💡 This error suggests the module needs to be rebuilt or reinstalled:');
+    console.log('   The module source files have been updated but the built files are outdated.');
+    console.log('\n🔧 Solutions:');
+    console.log('   1. Reinstall the module in your React Native project:');
+    console.log('      cd /Users/faisalhussain/ReactNativeApps/AudioAnalysisApp');
+    console.log('      npm uninstall react-native-realtime-audio-analysis');
+    console.log('      npm install file:local_modules/realtime-audio-analysis-module');
+    console.log('');
+    console.log('   2. Or rebuild the module and copy files:');
+    console.log('      cd /path/to/realtime-audio-analysis-module');
+    console.log('      npm run prepare');
+    console.log('      cp -r lib /Users/faisalhussain/ReactNativeApps/AudioAnalysisApp/node_modules/react-native-realtime-audio-analysis/');
+    console.log('');
+    console.log('   3. See UPDATE_MODULE_IN_RN_APP.md for detailed instructions');
+  } else {
+    console.log('\n💡 Troubleshooting:');
+    console.log('1. Make sure you are running this from your React Native project root');
+    console.log('2. Ensure the module is installed: npm install /path/to/realtime-audio-analysis-module');
+    console.log('3. Check that node_modules/react-native-realtime-audio-analysis exists');
+  }
 }
