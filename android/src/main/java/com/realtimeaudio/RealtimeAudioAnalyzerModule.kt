@@ -100,33 +100,36 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
     private fun sendEvent(data: AudioEngine.AudioData) {
         if (!reactApplicationContext.hasActiveCatalystInstance()) return
 
-        val params = Arguments.createMap().apply {
-            putDouble("timestamp", data.timestamp)
-            putDouble("volume", data.rms)  // Map rms to volume for consistency
-            putDouble("peak", data.peak)
-            putInt("sampleRate", data.sampleRate)
-            putInt("fftSize", data.bufferSize)  // Map bufferSize to fftSize
+        // Create a helper function to build the params map
+        fun createEventParams(): WritableMap {
+            return Arguments.createMap().apply {
+                putDouble("timestamp", data.timestamp)
+                putDouble("volume", data.rms)  // Map rms to volume for consistency
+                putDouble("peak", data.peak)
+                putInt("sampleRate", data.sampleRate)
+                putInt("fftSize", data.bufferSize)  // Map bufferSize to fftSize
 
-            if (data.fft != null) {
-                val fftArray = Arguments.createArray()
-                for (value in data.fft) {
-                    fftArray.pushDouble(value.toDouble())
+                if (data.fft != null) {
+                    val fftArray = Arguments.createArray()
+                    for (value in data.fft) {
+                        fftArray.pushDouble(value.toDouble())
+                    }
+                    putArray("frequencyData", fftArray)  // Map fft to frequencyData
+                    putArray("timeData", Arguments.createArray())  // Add empty timeData for now
+                } else {
+                    putArray("frequencyData", Arguments.createArray())
+                    putArray("timeData", Arguments.createArray())
                 }
-                putArray("frequencyData", fftArray)  // Map fft to frequencyData
-                putArray("timeData", Arguments.createArray())  // Add empty timeData for now
-            } else {
-                putArray("frequencyData", Arguments.createArray())
-                putArray("timeData", Arguments.createArray())
             }
         }
 
-        // Send to both event names for compatibility
+        // Send to both event names for compatibility - create separate maps for each emit
         reactApplicationContext
             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            .emit("AudioAnalysisData", params)
+            .emit("AudioAnalysisData", createEventParams())
             
         reactApplicationContext
             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            .emit("RealtimeAudioAnalyzer:onData", params)
+            .emit("RealtimeAudioAnalyzer:onData", createEventParams())
     }
 }
