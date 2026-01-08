@@ -96,11 +96,12 @@ const SimpleModuleTest = () => {
         }, 2000);
         
       } else {
-        setModuleStatus(\`❌ Missing methods: \${methods.filter(m => !availableMethods.includes(m)).join(', ')}\`);
+        const missingMethods = methods.filter(m => !availableMethods.includes(m));
+        setModuleStatus(`❌ Missing methods: ${missingMethods.join(', ')}`);
       }
       
     } catch (error) {
-      setModuleStatus(\`❌ Error: \${error.message}\`);
+      setModuleStatus(`❌ Error: ${error.message}`);
       console.error('Module test error:', error);
     }
   };
