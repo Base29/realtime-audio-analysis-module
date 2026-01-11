@@ -4,10 +4,23 @@ This guide shows how to integrate and test the `react-native-realtime-audio-anal
 
 ## 📦 Installation
 
-### 1. Install the Module
+### Standard Installation (from npm registry)
 
 ```bash
 npm install react-native-realtime-audio-analysis
+```
+
+### Local Installation (from local directory)
+
+```bash
+# From your React Native project root
+npm install /path/to/react-native-realtime-audio-analysis
+
+# Or using relative path
+npm install ../path/to/react-native-realtime-audio-analysis
+
+# Or using file: protocol
+npm install file:../path/to/react-native-realtime-audio-analysis
 ```
 
 ### 2. iOS Setup
@@ -19,6 +32,8 @@ cd ios && pod install && cd ..
 ### 3. Android Setup
 
 No additional setup required for React Native 0.60+ (autolinking handles it automatically).
+
+**✅ AUTOLINKING CONFIRMED**: This module **will autolink correctly** when installed as a local module. The module structure follows React Native autolinking conventions and includes all required configuration files.
 
 ## 🧪 Testing Integration
 
