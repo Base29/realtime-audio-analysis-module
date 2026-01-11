@@ -1,0 +1,2 @@
+{"version":3,"names":["_pathResolver","require","_androidConfig","_iosConfig","_verification"],"sourceRoot":"../../../src","sources":["linking/index.js"],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA,IAAAA,aAAA,GAAAC,OAAA;AACA,IAAAC,cAAA,GAAAD,OAAA;AACA,IAAAE,UAAA,GAAAF,OAAA;AACA,IAAAG,aAAA,GAAAH,OAAA","ignoreList":[]}
+AD,OAAA;AAOA,IAAAE,UAAA,GAAAF,OAAA;AAOA,IAAAG,aAAA,GAAAH,OAAA;AAYA,IAAAI,IAAA,GAAAJ,OAAA;AAOA,IAAAK,YAAA,GAAAL,OAAA;AAOA,IAAAM,aAAA,GAAAN,OAAA","ignoreList":[]}

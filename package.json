@@ -26,6 +26,7 @@
   ],
   "scripts": {
     "test": "jest",
+    "test:linking": "node test-module-linking.js",
     "typescript": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "prepare": "bob build"

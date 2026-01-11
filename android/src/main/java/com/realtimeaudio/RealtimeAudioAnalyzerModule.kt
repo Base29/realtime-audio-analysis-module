@@ -15,7 +15,7 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
     private val engine = AudioEngine { data -> sendEvent(data) }
 
     override fun getName(): String {
-        return "RealtimeAudioAnalysis"  // Changed to match JavaScript expectation
+        return "RealtimeAudioAnalyzer"  // Match iOS module name
     }
 
     // Add the methods that JavaScript expects

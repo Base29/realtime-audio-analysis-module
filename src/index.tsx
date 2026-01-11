@@ -6,8 +6,8 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-// Get the native module - try both possible names
-const RealtimeAudioAnalysisModule = NativeModules.RealtimeAudioAnalysis || NativeModules.RealtimeAudioAnalyzer;
+// Get the native module - standardized name across platforms
+const RealtimeAudioAnalysisModule = NativeModules.RealtimeAudioAnalyzer;
 
 if (!RealtimeAudioAnalysisModule) {
   console.error('Available NativeModules:', Object.keys(NativeModules).filter(key => key.includes('Audio') || key.includes('Realtime')));
@@ -36,7 +36,7 @@ export interface AudioAnalysisEvent {
 const eventEmitter = new NativeEventEmitter(RealtimeAudioAnalysisModule);
 
 // Debug: Log available methods
-console.log('RealtimeAudioAnalysis native methods:', Object.keys(RealtimeAudioAnalysisModule));
+console.log('RealtimeAudioAnalyzer native methods:', Object.keys(RealtimeAudioAnalysisModule));
 
 const RealtimeAudioAnalyzer = {
   // Core methods

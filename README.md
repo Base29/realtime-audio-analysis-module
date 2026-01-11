@@ -13,8 +13,9 @@ Designed for performance-critical applications requiring real-time visualization
   - **FFT** (Fast Fourier Transform) magnitude spectrum for frequency visualization.
 - **Cross-Platform Native Engines**:
   - **Android**: built on `AudioRecord` + NDK (C++) using **KissFFT**.
-  - **iOS**: built on `AVAudioEngine` + Apple **Accelerate Framework** (vDSP).
+  - **iOS**: built on `AVAudioEngine` + Apple **Accelerate Framework** (vDSP) with **Pure Swift Bridge**.
 - **Efficient Bridge**: Tunable data emission rates (e.g., 30/60 FPS) and native downsampling to minimize bridge traffic.
+- **Pure Swift iOS Implementation**: No Objective-C bridge files required - modern Swift-only React Native integration.
 
 ## 📦 Installation
 
@@ -27,14 +28,27 @@ npm install react-native-realtime-audio-analysis
 cd ios && pod install
 ```
 
+**Testing Integration**:
+```bash
+npm run test:linking  # Automated linking verification
+```
+
+**Quick Test**:
+```typescript
+// Add to your App.tsx for testing
+import TestScreen from 'react-native-realtime-audio-analysis/TestScreen';
+export default function App() { return <TestScreen />; }
+```
+
 **Permissions**:
-Requires microphone access. See [Usage Guide](docs/Usage-Guide.md#2-permissions-critical) for details.
+Requires microphone access. See [Integration Guide](INTEGRATION_GUIDE.md) for complete setup instructions.
 
 ## 📖 Documentation
 
 **[📚 Complete Documentation Index](docs/README.md)** - Browse all available documentation
 
 ### Getting Started
+- **[Integration Guide](INTEGRATION_GUIDE.md)**: Complete setup, testing, and troubleshooting guide
 - **[Quick Start Guide](docs/QUICK_START.md)**: Get up and running in minutes with simple examples
 - **[Usage Guide](docs/USAGE.md)**: Complete guide for using the module with Android and iOS
 - **[API Reference](docs/API_REFERENCE.md)**: Full API documentation with examples and type definitions
@@ -48,6 +62,7 @@ Requires microphone access. See [Usage Guide](docs/Usage-Guide.md#2-permissions-
 ### Installation & Setup
 - **[Local Installation Guide](docs/LOCAL_INSTALL.md)**: Installing and using this module as a local package
 - **[Path Configuration](docs/PATH_CONFIGURATION.md)**: Configuring correct paths for manual linking
+- **[Pure Swift Bridge Implementation](docs/SWIFT_BRIDGE_IMPLEMENTATION.md)**: iOS pure Swift implementation details and migration guide
 
 ### Examples & Troubleshooting
 - **[Audio Visualizer Example](examples/AudioVisualizer.tsx)**: Complete React Native spectrum analyzer component

@@ -18,8 +18,9 @@ declare const RealtimeAudioAnalyzer: {
     stopAnalysis(): Promise<void>;
     isAnalyzing(): Promise<boolean>;
     getAnalysisConfig(): Promise<AnalysisConfig>;
-    addListener: any;
-    removeListeners: any;
+    addListener: (eventType: string, listener: (event: any) => void, context?: Object) => import("react-native").EmitterSubscription;
+    removeListeners: (eventType: string) => void;
     removeSubscription: (subscription: any) => any;
 };
 export default RealtimeAudioAnalyzer;
+//# sourceMappingURL=index.d.ts.map

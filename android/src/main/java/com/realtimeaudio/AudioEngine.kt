@@ -14,7 +14,7 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
 
     // DSP Configuration
     private var bufferSize = 1024
-    private var sampleRate = 44100
+    private var sampleRate = 48000  // Prefer 48kHz
     private var callbackRateHz = 30
     private var emitFft = true
     private var smoothingEnabled = true
@@ -73,24 +73,40 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
         this.emitFft = emitFft
         this.fftSize = bufferSize // Default FFT size to buffer size
 
-        // Ensure safe buffer size
-        val minBufferSize = AudioRecord.getMinBufferSize(
-            sampleRate,
+        // Ensure safe buffer size with fallback sample rate logic
+        var actualSampleRate = sampleRate
+        var minBufferSize = AudioRecord.getMinBufferSize(
+            actualSampleRate,
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT
         )
+        
+        // If 48kHz fails, try 44.1kHz fallback
+        if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
+            Log.w(TAG, "48kHz not supported, falling back to 44.1kHz")
+            actualSampleRate = 44100
+            minBufferSize = AudioRecord.getMinBufferSize(
+                actualSampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
+            )
+        }
+        
         if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
             throw Exception("Invalid parameter for AudioRecord")
         }
+        
+        // Update actual sample rate
+        this.sampleRate = actualSampleRate
+        Log.i(TAG, "Using sample rate: ${actualSampleRate}Hz, min buffer size: ${minBufferSize}")
 
         // We might need a larger internal buffer than the requested processing bufferSize
-        // asking for 2x min size is usually safe
         val recordBufferSize = kotlin.math.max(minBufferSize, bufferSize * 2)
 
         try {
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_RECOGNITION, // Tuned for voice/audio analysis often better than MIC
-                sampleRate,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION, // Tuned for voice/audio analysis
+                actualSampleRate,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 recordBufferSize
@@ -115,22 +131,37 @@ class AudioEngine(private val onDataCallback: (AudioData) -> Unit) {
 
     fun stop() {
         isRunning = false
+        
+        // Wait for processing thread to finish
         try {
-            processingThread?.join(500)
+            processingThread?.join(1000) // Wait up to 1 second
+            if (processingThread?.isAlive == true) {
+                Log.w(TAG, "Processing thread did not terminate gracefully")
+                processingThread?.interrupt()
+            }
         } catch (e: InterruptedException) {
-            e.printStackTrace()
+            Log.w(TAG, "Interrupted while waiting for processing thread", e)
+            Thread.currentThread().interrupt()
         }
         processingThread = null
 
+        // Stop and release AudioRecord
         try {
             audioRecord?.stop()
             audioRecord?.release()
         } catch (e: Exception) {
-            // Ignore stop errors
+            Log.w(TAG, "Error stopping AudioRecord", e)
         }
         audioRecord = null
         
-        cleanupFft()
+        // Cleanup native resources
+        try {
+            cleanupFft()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error cleaning up FFT", e)
+        }
+        
+        Log.i(TAG, "Audio engine stopped")
     }
 
     fun isRecording(): Boolean {
