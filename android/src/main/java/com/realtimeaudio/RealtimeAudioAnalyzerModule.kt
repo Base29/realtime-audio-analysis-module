@@ -12,6 +12,10 @@ import com.facebook.react.modules.core.DeviceEventManagerModule
 
 class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
+    companion object {
+        const val NAME = "RealtimeAudioAnalyzer"
+    }
+
     private val engine = AudioEngine { data -> sendEvent(data) }
 
     override fun getName(): String {
