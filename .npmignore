@@ -1,0 +1,33 @@
+# Never ship dependencies
+node_modules/
+
+# Build outputs that must be regenerated per app
+android/build/
+ios/build/
+ios/Pods/
+
+# Tooling / repo-only files
+.gradle/
+.idea/
+.vscode/
+*.log
+*.tgz
+
+# Tests / examples
+__tests__/
+__mocks__/
+example/
+testing/
+*.spec.ts
+*.spec.tsx
+*.test.ts
+*.test.tsx
+
+# Source control / OS
+.git/
+.gitignore
+.DS_Store
+
+# TS build artifacts (bob already controls lib/)
+src/**/*.map
+lib/**/*.map
