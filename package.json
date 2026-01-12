@@ -17,6 +17,7 @@
     "ios",
     "cpp",
     "*.podspec",
+    "react-native.config.js",
     "!lib/typescript/example",
     "!android/build",
     "!ios/build",
@@ -132,5 +133,18 @@
     "name": "RealtimeAudioAnalyzerSpec",
     "type": "modules",
     "jsSrcsDir": "src"
-  }
+  },
+  "@react-native-community/bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      "typescript"
+    ]
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ]
 }
