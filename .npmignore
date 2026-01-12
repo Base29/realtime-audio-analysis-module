@@ -35,4 +35,4 @@ test-module-linking.js
 src/**/*.map
 lib/**/*.map
 
-react-native-realtime-audio-analysis-*.tgz
+react-native-realtime-audio-analysis*

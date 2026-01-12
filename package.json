@@ -2,14 +2,31 @@
   "name": "react-native-realtime-audio-analysis",
   "version": "1.0.0",
   "description": "Real-time audio analysis module for React Native (iOS & Android)",
-  "main": "lib/commonjs/index.js",
-  "module": "lib/module/index.js",
+  "main": "lib/commonjs/index",
+  "module": "lib/module/index",
   "types": "lib/typescript/src/index.d.ts",
-  "react-native": "src/index.ts",
+  "react-native": "src/index",
   "source": "src/index",
   "bin": {
     "rn-module-link": "./lib/commonjs/linking/cli.js"
   },
+  "files": [
+    "src",
+    "lib",
+    "android",
+    "ios",
+    "cpp",
+    "*.podspec",
+    "!lib/typescript/example",
+    "!android/build",
+    "!ios/build",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__",
+    "!testing",
+    "!test-module-linking.js",
+    "!**/test-*.js"
+  ],
   "scripts": {
     "test": "jest",
     "test:linking": "node test-module-linking.js",
@@ -115,25 +132,5 @@
     "name": "RealtimeAudioAnalyzerSpec",
     "type": "modules",
     "jsSrcsDir": "src"
-  },
-  "files": [
-    "src",
-    "lib",
-    "!**/__tests__",
-    "!**/__fixtures__",
-    "!**/__mocks__"
-  ],
-  "@react-native-community/bob": {
-    "source": "src",
-    "output": "lib",
-    "targets": [
-      "commonjs",
-      "module",
-      "typescript"
-    ]
-  },
-  "eslintIgnore": [
-    "node_modules/",
-    "lib/"
-  ]
+  }
 }
