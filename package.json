@@ -22,7 +22,10 @@
     "!ios/build",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "!testing",
+    "!test-module-linking.js",
+    "!**/test-*.js"
   ],
   "scripts": {
     "test": "jest",

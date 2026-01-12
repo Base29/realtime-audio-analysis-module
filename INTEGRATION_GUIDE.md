@@ -14,14 +14,17 @@ npm install react-native-realtime-audio-analysis
 
 ```bash
 # From your React Native project root
-npm install /path/to/react-native-realtime-audio-analysis
+# Note: The folder name is 'realtime-audio-analysis-module' 
+# but it installs as 'react-native-realtime-audio-analysis' (from package.json name field)
 
-# Or using relative path
-npm install ../path/to/react-native-realtime-audio-analysis
+npm install ./local_modules/realtime-audio-analysis-module
 
-# Or using file: protocol
-npm install file:../path/to/react-native-realtime-audio-analysis
+# Alternative paths:
+npm install ../path/to/realtime-audio-analysis-module
+npm install file:../path/to/realtime-audio-analysis-module
 ```
+
+**⚠️ Important**: The folder name (`realtime-audio-analysis-module`) differs from the installed package name (`react-native-realtime-audio-analysis`). This is normal - npm uses the `name` field from `package.json` for the installed package name.
 
 ### 2. iOS Setup
 
@@ -64,11 +67,17 @@ Add the comprehensive test screen to your app for runtime testing:
 ```typescript
 // In your App.tsx or a new screen
 import React from 'react';
-import TestScreen from 'react-native-realtime-audio-analysis/TestScreen';
+import TestScreen from 'react-native-realtime-audio-analysis/testing/TestScreen';
 
 export default function App() {
   return <TestScreen />;
 }
+```
+
+**Alternative: Copy the file to your project**
+```bash
+cp node_modules/react-native-realtime-audio-analysis/testing/TestScreen.tsx ./src/components/
+# Then update the import to: import RealtimeAudioAnalyzer from 'react-native-realtime-audio-analysis';
 ```
 
 The test screen provides:
@@ -134,8 +143,8 @@ export const AudioExample = () => {
 ### Complete Example Component
 
 For a complete, ready-to-use example, see:
-- `example-usage.tsx` - Simple audio level display
-- `TestScreen.tsx` - Comprehensive testing interface
+- `testing/example-usage.tsx` - Simple audio level display
+- `testing/TestScreen.tsx` - Comprehensive testing interface
 - `examples/AudioVisualizer.tsx` - Advanced visualizer with FFT
 
 ## 🔧 Configuration Options

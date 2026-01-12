@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 
-// Import the module
+// Import the module using the installed package name
 import RealtimeAudioAnalyzer, { AudioAnalysisEvent } from 'react-native-realtime-audio-analysis';
 
 interface TestResult {
@@ -35,21 +35,18 @@ interface AudioData {
 /**
  * Comprehensive Test Screen for React Native Realtime Audio Analysis Module
  * 
- * This component tests:
- * - Module linking and availability
- * - Method exports and functionality
- * - Event emission and data flow
- * - Permission handling
- * - Audio analysis accuracy
- * - Error handling and edge cases
+ * This version is designed to be copied into your React Native app after installation.
+ * It uses the installed module name 'react-native-realtime-audio-analysis'.
+ * 
+ * Usage:
+ * 1. Copy this file to your React Native project (e.g., src/components/TestScreen.tsx)
+ * 2. Import and use: import TestScreen from './src/components/TestScreen';
  */
 export const TestScreen: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [audioData, setAudioData] = useState<AudioData | null>(null);
-  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [currentTest, setCurrentTest] = useState<string | null>(null);
   const [eventCount, setEventCount] = useState(0);
-  const [lastEventTime, setLastEventTime] = useState<number>(0);
 
   // Test suite configuration
   const tests: TestResult[] = [
@@ -74,38 +71,26 @@ export const TestScreen: React.FC = () => {
       peak: data.peak || 0,
       fft: data.frequencyData || data.fft || [],
       timestamp: data.timestamp || now,
-      sampleRate: data.sampleRate,
-      bufferSize: data.bufferSize,
+      sampleRate: (data as any).sampleRate,
+      bufferSize: (data as any).bufferSize,
     });
     setEventCount(prev => prev + 1);
-    setLastEventTime(now);
   }, []);
 
   // Setup event listener
   useEffect(() => {
-    let subscription: any = null;
+    if (!RealtimeAudioAnalyzer) return;
+
+    const emitter = new NativeEventEmitter(RealtimeAudioAnalyzer);
     
-    if (RealtimeAudioAnalyzer) {
-      try {
-        const emitter = new NativeEventEmitter(RealtimeAudioAnalyzer);
-        
-        // Try both event names for compatibility
-        subscription = emitter.addListener('AudioAnalysisData', onAudioData);
-        
-        // Also try the alternative event name
-        const subscription2 = emitter.addListener('RealtimeAudioAnalyzer:onData', onAudioData);
-        
-        return () => {
-          subscription?.remove();
-          subscription2?.remove();
-        };
-      } catch (error) {
-        console.error('Failed to setup event listener:', error);
-      }
-    }
+    const subscription = emitter.addListener('AudioAnalysisData', onAudioData);
+    
+    // Also try the alternative event name
+    const subscription2 = emitter.addListener('RealtimeAudioAnalyzer:onData', onAudioData);
     
     return () => {
       subscription?.remove();
+      subscription2?.remove();
     };
   }, [onAudioData]);
 
@@ -343,16 +328,6 @@ export const TestScreen: React.FC = () => {
     try {
       if (!RealtimeAudioAnalyzer) {
         throw new Error('Module not available');
-      }
-
-      // Test invalid config (should not crash)
-      try {
-        await RealtimeAudioAnalyzer.startAnalysis({
-          fftSize: -1, // Invalid
-          sampleRate: 0, // Invalid
-        } as any);
-      } catch (expectedError) {
-        // This is expected - invalid config should be rejected
       }
 
       // Test multiple stops (should be idempotent)

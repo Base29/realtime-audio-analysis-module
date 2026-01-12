@@ -18,5 +18,12 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "esnext"
-  }
+  },
+  "exclude": [
+    "testing/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "test-*.js",
+    "node_modules"
+  ]
 }

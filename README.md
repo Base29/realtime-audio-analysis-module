@@ -36,7 +36,7 @@ npm run test:linking  # Automated linking verification
 **Quick Test**:
 ```typescript
 // Add to your App.tsx for testing
-import TestScreen from 'react-native-realtime-audio-analysis/TestScreen';
+import TestScreen from 'react-native-realtime-audio-analysis/testing/TestScreen';
 export default function App() { return <TestScreen />; }
 ```
 

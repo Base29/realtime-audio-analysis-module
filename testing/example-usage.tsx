@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { NativeEventEmitter } from 'react-native';
-import RealtimeAudioAnalyzer, { AudioAnalysisEvent } from 'react-native-realtime-audio-analysis';
+import RealtimeAudioAnalyzer, { AudioAnalysisEvent } from '../src/index';
 
 /**
  * Simple usage example for React Native Realtime Audio Analysis
