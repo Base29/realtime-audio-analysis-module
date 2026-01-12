@@ -1,18 +1,3 @@
-// buildscript {
-//     repositories {
-//         google()
-//         mavenCentral()
-//     }
-//     dependencies {
-//         classpath "com.android.tools.build:gradle:8.2.1"
-//         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22"
-//     }
-// }
-
-// apply plugin: "com.android.library"
-// apply plugin: "kotlin-android"
-// apply plugin: "com.facebook.react"
-
 plugins {
   id "com.android.library"
   id "org.jetbrains.kotlin.android"
@@ -99,4 +84,11 @@ react {
   // IMPORTANT: point to the package root, not src/
   // RN codegen scans from jsRootDir and uses codegenConfig.jsSrcsDir inside package.json
   jsRootDir = file("..")
+}
+
+afterEvaluate {
+  // Ensure codegen runs before anything tries to consume generated JNI/CMake targets
+  tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn("generateCodegenArtifactsFromSchema")
+  }
 }
