@@ -30,7 +30,8 @@ cd ios && pod install
 
 **Testing Integration**:
 ```bash
-npm run test:linking  # Automated linking verification
+# After installation, run from your React Native project root:
+node node_modules/react-native-realtime-audio-analysis/test-module-linking.js
 ```
 
 **Quick Test**:

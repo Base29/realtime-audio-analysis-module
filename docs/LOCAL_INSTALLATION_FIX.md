@@ -89,8 +89,8 @@ npm install ./local_modules/realtime-audio-analysis-module
 # iOS setup
 cd ios && pod install && cd ..
 
-# Verify installation
-npm run test:linking
+# Verify installation - run the test script from the installed module
+node node_modules/react-native-realtime-audio-analysis/test-module-linking.js
 ```
 
 ### 2. Use Test Components

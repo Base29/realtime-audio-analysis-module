@@ -36,6 +36,18 @@ cd ios && pod install && cd ..
 
 No additional setup required for React Native 0.60+ (autolinking handles it automatically).
 
+### 4. Verify Installation
+
+```bash
+# Run the linking test from your React Native project root
+node node_modules/react-native-realtime-audio-analysis/test-module-linking.js
+
+# Optional: Add to your app's package.json for convenience
+# Add this to your app's package.json scripts section:
+# "test:audio-module": "node node_modules/react-native-realtime-audio-analysis/test-module-linking.js"
+# Then run: npm run test:audio-module
+```
+
 **✅ AUTOLINKING CONFIRMED**: This module **will autolink correctly** when installed as a local module. The module structure follows React Native autolinking conventions and includes all required configuration files.
 
 ## 🧪 Testing Integration
@@ -45,11 +57,8 @@ No additional setup required for React Native 0.60+ (autolinking handles it auto
 Run the automated linking test to verify the module is correctly integrated:
 
 ```bash
-# From your React Native project root
+# From your React Native project root (after installing the module)
 node node_modules/react-native-realtime-audio-analysis/test-module-linking.js
-
-# Or if you've added it to package.json scripts:
-npm run test:linking
 ```
 
 This test will verify:
