@@ -98,7 +98,7 @@ class RealtimeAudioAnalyzerModule(reactContext: ReactApplicationContext) : React
     }
 
     private fun sendEvent(data: AudioEngine.AudioData) {
-        if (!reactApplicationContext.hasActiveCatalystInstance()) return
+        if (!reactApplicationContext.hasActiveReactInstance()) return
 
         // Create a helper function to build the params map
         fun createEventParams(): WritableMap {
