@@ -51,4 +51,3 @@ export declare function configureMainApplication(projectRoot: string, moduleConf
  * Convenience function to configure Android build files
  */
 export declare function configureBuildFiles(projectRoot: string, moduleConfig: ModuleConfig): AndroidConfigResult;
-//# sourceMappingURL=android-config.d.ts.map

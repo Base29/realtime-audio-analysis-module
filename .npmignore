@@ -1,12 +1,14 @@
 # Never ship dependencies
 node_modules/
+**/node_modules/**
 
-# Build outputs that must be regenerated per app
+# Native build artifacts
 android/build/
 ios/build/
 ios/Pods/
+cpp/build/
 
-# Tooling / repo-only files
+# Tooling
 .gradle/
 .idea/
 .vscode/
@@ -16,18 +18,21 @@ ios/Pods/
 # Tests / examples
 __tests__/
 __mocks__/
+__fixtures__/
 example/
 testing/
-*.spec.ts
-*.spec.tsx
-*.test.ts
-*.test.tsx
+test-module-linking.js
+**/test-*.js
+**/*.spec.*
+**/*.test.*
 
 # Source control / OS
 .git/
 .gitignore
 .DS_Store
 
-# TS build artifacts (bob already controls lib/)
+# Source maps only
 src/**/*.map
 lib/**/*.map
+
+react-native-realtime-audio-analysis-*.tgz

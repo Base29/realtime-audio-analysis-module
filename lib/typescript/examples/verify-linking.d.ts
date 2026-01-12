@@ -4,4 +4,3 @@
  */
 declare function main(): Promise<void>;
 export { main };
-//# sourceMappingURL=verify-linking.d.ts.map

@@ -7,7 +7,6 @@ import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
 
 class RealtimeAudioAnalyzerPackage : TurboReactPackage() {
-
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
     return if (name == RealtimeAudioAnalyzerModule.NAME) {
       RealtimeAudioAnalyzerModule(reactContext)
@@ -20,11 +19,11 @@ class RealtimeAudioAnalyzerPackage : TurboReactPackage() {
         RealtimeAudioAnalyzerModule.NAME to ReactModuleInfo(
           RealtimeAudioAnalyzerModule.NAME,
           RealtimeAudioAnalyzerModule.NAME,
-          /* canOverrideExistingModule */ false,
-          /* needsEagerInit */ false,
-          /* hasConstants */ true,
-          /* isCxxModule */ false,
-          /* isTurboModule */ true
+          false, // canOverrideExistingModule
+          false, // needsEagerInit
+          true,  // hasConstants
+          false, // isCxxModule
+          true   // isTurboModule
         )
       )
     }

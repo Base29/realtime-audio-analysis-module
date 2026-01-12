@@ -49,4 +49,3 @@ export declare function detectModule(projectRoot: string, moduleName?: string): 
  * Convenience function to resolve a module path from various input formats
  */
 export declare function resolveModulePath(projectRoot: string, pathInput: string): PathResolutionResult;
-//# sourceMappingURL=path-resolver.d.ts.map

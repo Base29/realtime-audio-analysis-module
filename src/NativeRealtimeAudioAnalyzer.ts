@@ -15,11 +15,11 @@ export interface Spec extends TurboModule {
   isAnalyzing(): Promise<boolean>;
   getAnalysisConfig(): Promise<AnalysisConfig>;
 
-  // RN EventEmitter requirement (you already have these)
+  // RN EventEmitter requirement
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 
-  // Optional legacy aliases you still expose natively
+  // Optional legacy aliases you expose natively
   start(options: AnalysisConfig): Promise<void>;
   stop(): Promise<void>;
   isRunning(): Promise<boolean>;
@@ -29,4 +29,12 @@ export interface Spec extends TurboModule {
   setFftConfig(fftSize: number, downsampleBins: number): Promise<void>;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('RealtimeAudioAnalyzer');
+/**
+ * IMPORTANT:
+ * - Use `get` (NOT getEnforcing) while Android is still legacy-registered.
+ * - Once you migrate Android to TurboReactPackage and proper Turbo registration,
+ *   you can switch back to `getEnforcing` if you want hard guarantees.
+ */
+const module = TurboModuleRegistry.get<Spec>('RealtimeAudioAnalyzer');
+
+export default module;

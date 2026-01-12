@@ -62,4 +62,3 @@ declare class ReactNativeModuleLinkingCLI {
 declare function setupCLI(): void;
 export { ReactNativeModuleLinkingCLI, setupCLI };
 export type { CLIOptions, CLILinkingResult };
-//# sourceMappingURL=cli.d.ts.map

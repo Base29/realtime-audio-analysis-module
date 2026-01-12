@@ -87,4 +87,3 @@ export declare function verifyModuleLinking(projectRoot: string, moduleName?: st
  * Convenience function to generate diagnostics
  */
 export declare function generateDiagnostics(projectRoot: string, moduleName?: string): Promise<DiagnosticInfo>;
-//# sourceMappingURL=verification.d.ts.map

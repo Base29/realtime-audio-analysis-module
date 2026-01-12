@@ -5,4 +5,3 @@
  */
 declare function main(): Promise<void>;
 export { main };
-//# sourceMappingURL=generate-manual-guide.d.ts.map

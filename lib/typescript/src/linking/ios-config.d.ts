@@ -44,4 +44,3 @@ export declare function configurePodfile(projectRoot: string, moduleConfig: Modu
  * Convenience function to validate iOS project
  */
 export declare function validateIOSProject(projectRoot: string): IOSConfigResult;
-//# sourceMappingURL=ios-config.d.ts.map

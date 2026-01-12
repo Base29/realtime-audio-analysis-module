@@ -9,4 +9,3 @@ import React from 'react';
  * - Auto-permission handling
  */
 export declare const AudioVisualizer: () => React.JSX.Element;
-//# sourceMappingURL=AudioVisualizer.d.ts.map

@@ -1,6 +1,7 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 import NativeRealtimeAudioAnalyzer, {
   type AnalysisConfig,
+  type Spec as TurboSpec,
 } from './NativeRealtimeAudioAnalyzer';
 
 const LINKING_ERROR =
@@ -9,26 +10,25 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-type NativeModuleShape = typeof NativeRealtimeAudioAnalyzer;
-
-/**
- * Turbo-first (New Architecture).
- * Legacy fallback: NativeModules.* (Old Architecture / partially migrated setups).
- *
- * In some setups the legacy name may differ, so we try a small set of common keys.
- */
 const legacyCandidateNames = [
   'RealtimeAudioAnalyzer', // expected (matches getName())
   'RealtimeAudioAnalyzerModule', // occasional legacy naming
 ] as const;
 
-const legacyModule = legacyCandidateNames
-  .map((name) => (NativeModules as any)[name])
-  .find(Boolean) as NativeModuleShape | undefined;
+function getLegacyModule(): any | null {
+  for (const name of legacyCandidateNames) {
+    const m = (NativeModules as any)[name];
+    if (m) return m;
+  }
+  return null;
+}
 
-// Prefer Turbo module if it exists, else fallback to legacy
-const RealtimeAudioAnalysisModule: NativeModuleShape | undefined =
-  (NativeRealtimeAudioAnalyzer as unknown as NativeModuleShape) ?? legacyModule;
+// Turbo module can be null until Android is truly Turbo-registered
+const turboModule: TurboSpec | null = (NativeRealtimeAudioAnalyzer ?? null) as TurboSpec | null;
+const legacyModule: any | null = getLegacyModule();
+
+// Prefer turbo when available, otherwise legacy
+const RealtimeAudioAnalysisModule: any | null = turboModule ?? legacyModule;
 
 if (!RealtimeAudioAnalysisModule) {
   console.error(
@@ -56,14 +56,10 @@ export interface AudioAnalysisEvent {
   fft?: number[];
 }
 
-/**
- * NativeEventEmitter requires a native module instance on iOS.
- * On Android it’s more lenient, but we pass the module anyway.
- */
-const eventEmitter = new NativeEventEmitter(RealtimeAudioAnalysisModule as any);
+const eventEmitter = new NativeEventEmitter(RealtimeAudioAnalysisModule);
 
 const RealtimeAudioAnalyzer = {
-  // Core methods (keep identical to your current API)
+  // Core methods
   startAnalysis(config: AnalysisConfig = {}): Promise<void> {
     return RealtimeAudioAnalysisModule.startAnalysis(config);
   },
@@ -80,24 +76,23 @@ const RealtimeAudioAnalyzer = {
     return RealtimeAudioAnalysisModule.getAnalysisConfig();
   },
 
-  // Backward-compatible aliases (in case older app code calls these)
+  // Backward-compatible aliases
   start(config: AnalysisConfig = {}): Promise<void> {
-    // Your native module already aliases start -> startAnalysis
-    const fn = (RealtimeAudioAnalysisModule as any).start ?? RealtimeAudioAnalysisModule.startAnalysis;
+    const fn = RealtimeAudioAnalysisModule.start ?? RealtimeAudioAnalysisModule.startAnalysis;
     return fn(config);
   },
 
   stop(): Promise<void> {
-    const fn = (RealtimeAudioAnalysisModule as any).stop ?? RealtimeAudioAnalysisModule.stopAnalysis;
+    const fn = RealtimeAudioAnalysisModule.stop ?? RealtimeAudioAnalysisModule.stopAnalysis;
     return fn();
   },
 
   isRunning(): Promise<boolean> {
-    const fn = (RealtimeAudioAnalysisModule as any).isRunning ?? RealtimeAudioAnalysisModule.isAnalyzing;
+    const fn = RealtimeAudioAnalysisModule.isRunning ?? RealtimeAudioAnalysisModule.isAnalyzing;
     return fn();
   },
 
-  // Event emitter API (unchanged)
+  // Event emitter API
   addListener: eventEmitter.addListener.bind(eventEmitter),
   removeListeners: eventEmitter.removeAllListeners.bind(eventEmitter),
   removeSubscription: (subscription: any) => subscription.remove(),
