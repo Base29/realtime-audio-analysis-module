@@ -32,7 +32,9 @@
     "test:linking": "node test-module-linking.js",
     "typescript": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "prepare": "bob build"
+    "prepare": "bob build",
+    "pack:dry": "npm pack --dry-run",
+    "pack:check": "npm pack && tar -tf react-native-realtime-audio-analysis-*.tgz"
   },
   "keywords": [
     "react-native",
