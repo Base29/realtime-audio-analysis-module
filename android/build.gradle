@@ -5,90 +5,99 @@ plugins {
 }
 
 def safeExtGet(prop, fallback) {
-    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
 android {
-    namespace "com.realtimeaudio"
-    compileSdkVersion safeExtGet("compileSdkVersion", 34)
-    buildToolsVersion safeExtGet("buildToolsVersion", "34.0.0")
+  namespace "com.realtimeaudio"
+  compileSdkVersion safeExtGet("compileSdkVersion", 34)
+  buildToolsVersion safeExtGet("buildToolsVersion", "34.0.0")
 
-    defaultConfig {
-        minSdkVersion safeExtGet("minSdkVersion", 21)
-        targetSdkVersion safeExtGet("targetSdkVersion", 34)
-        
-        externalNativeBuild {
-            cmake {
-                cppFlags "-O2 -frtti -fexceptions -Wall -Wno-unused-variable"
-                arguments "-DANDROID_STL=c++_shared"
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-
-    lintOptions {
-        disable "GradleCompatible"
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+  defaultConfig {
+    minSdkVersion safeExtGet("minSdkVersion", 21)
+    targetSdkVersion safeExtGet("targetSdkVersion", 34)
 
     externalNativeBuild {
-        cmake {
-            path "CMakeLists.txt"
-        }
+      cmake {
+        cppFlags "-O2 -frtti -fexceptions -Wall -Wno-unused-variable"
+        arguments "-DANDROID_STL=c++_shared"
+      }
     }
-    
-    packagingOptions {
-        excludes += "/META-INF/{AL2.0,LGPL2.1}"
-    }
+  }
 
-    buildFeatures {
-        buildConfig true
+  buildTypes {
+    release {
+      minifyEnabled false
     }
+  }
+
+  // AGP 8+ prefers lint { } but this still works; keeping as-is for drop-in compatibility
+  lintOptions {
+    disable "GradleCompatible"
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+    }
+  }
+
+  packagingOptions {
+    excludes += "/META-INF/{AL2.0,LGPL2.1}"
+  }
+
+  buildFeatures {
+    buildConfig true
+  }
 }
 
 repositories {
-    mavenLocal()
-    maven {
-        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-        url("$rootDir/../node_modules/react-native/android")
-    }
-    google()
-    mavenCentral()
+  mavenLocal()
+  maven {
+    // All of React Native is installed from npm
+    url("$rootDir/../node_modules/react-native/android")
+  }
+  google()
+  mavenCentral()
 }
 
 dependencies {
-    //noinspection GradleDynamicVersion
-    implementation "com.facebook.react:react-android:+"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
-    // Coroutines for async operations (if needed, though we use Thread directly usually for audio)
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+  // Use the app's RN version via Gradle resolution (OK for libraries)
+  implementation "com.facebook.react:react-android:+"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 }
 
 react {
+  // MUST match package.json -> codegenConfig.name
   libraryName = "RealtimeAudioAnalyzerSpec"
+
+  // MUST match your Android package/namespace
   codegenJavaPackageName = "com.realtimeaudio"
 
-  // IMPORTANT: point to the package root, not src/
-  // RN codegen scans from jsRootDir and uses codegenConfig.jsSrcsDir inside package.json
+  // Point to the library root (where package.json lives)
   jsRootDir = file("..")
 }
 
+/**
+ * Ensure Codegen runs before tasks that consume generated JNI/CMake targets.
+ * This is critical because RN's autolinking CMake file will add_subdirectory(...)
+ * into android/build/generated/source/codegen/jni, which must exist before CMake config.
+ */
 afterEvaluate {
-  // Ensure codegen runs before anything tries to consume generated JNI/CMake targets
-  tasks.matching { it.name == "preBuild" }.configureEach {
-    dependsOn("generateCodegenArtifactsFromSchema")
+  def codegenTask = tasks.findByName("generateCodegenArtifactsFromSchema")
+  if (codegenTask != null) {
+    tasks.matching { it.name == "preBuild" }.configureEach {
+      dependsOn(codegenTask)
+    }
   }
 }
