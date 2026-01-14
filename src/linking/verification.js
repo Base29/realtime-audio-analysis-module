@@ -1,15 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { PathResolver } from './path-resolver';
-import { AndroidConfigManager } from './android-config';
 import { IOSConfigManager } from './ios-config';
 export class ModuleLinkingVerifier {
     pathResolver;
-    androidManager;
     iosManager;
     constructor() {
         this.pathResolver = new PathResolver();
-        this.androidManager = new AndroidConfigManager();
         this.iosManager = new IOSConfigManager();
     }
     /**

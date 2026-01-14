@@ -1,4 +1,6 @@
 import { type AnalysisConfig } from './NativeRealtimeAudioAnalyzer';
+export { RichAudioDemo, useRealtimeAudioLevels } from './demo';
+export type { RichAudioDemoProps } from './demo';
 export type { AnalysisConfig };
 export interface AudioAnalysisEvent {
     frequencyData: number[];
@@ -26,6 +28,8 @@ declare const RealtimeAudioAnalyzer: {
     stopAnalysis(): Promise<void>;
     isAnalyzing(): Promise<boolean>;
     getAnalysisConfig(): Promise<AnalysisConfig>;
+    setSmoothing(enabled: boolean, factor: number): Promise<void>;
+    setFftConfig(fftSize: number, downsampleBins: number): Promise<void>;
     start(config?: AnalysisConfig): Promise<void>;
     stop(): Promise<void>;
     isRunning(): Promise<boolean>;

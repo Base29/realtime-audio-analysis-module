@@ -4,6 +4,24 @@ import NativeRealtimeAudioAnalyzer, {
   type Spec as TurboSpec,
 } from './NativeRealtimeAudioAnalyzer';
 
+// Export demo component and utilities
+export { 
+  RichAudioDemo, 
+  SpectrumVisualizer,
+  LevelMeter,
+  useRealtimeAudioLevels,
+  AudioPermissionManager,
+  RingBuffer
+} from './demo';
+export type { 
+  RichAudioDemoProps,
+  SpectrumVisualizerProps,
+  LevelMeterProps,
+  AudioLevelsHook,
+  PermissionStatus,
+  AnalysisConfig as DemoAnalysisConfig
+} from './demo';
+
 const LINKING_ERROR =
   `The package 'react-native-realtime-audio-analysis' doesn't seem to be linked. Make sure:\n\n` +
   Platform.select({ ios: "- You have run 'cd ios && pod install'\n", default: '' }) +
@@ -122,6 +140,15 @@ const RealtimeAudioAnalyzer = {
 
   getAnalysisConfig(): Promise<AnalysisConfig> {
     return RealtimeAudioAnalysisModule.getAnalysisConfig();
+  },
+
+  // Advanced configuration methods
+  setSmoothing(enabled: boolean, factor: number): Promise<void> {
+    return RealtimeAudioAnalysisModule.setSmoothing(enabled, factor);
+  },
+
+  setFftConfig(fftSize: number, downsampleBins: number): Promise<void> {
+    return RealtimeAudioAnalysisModule.setFftConfig(fftSize, downsampleBins);
   },
 
   // Backward-compatible aliases
