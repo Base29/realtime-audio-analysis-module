@@ -4,7 +4,7 @@ import Accelerate
 import React
 
 @objc(RealtimeAudioAnalyzer)
-class RealtimeAudioAnalyzer: RCTEventEmitter, RCTBridgeModule {
+class RealtimeAudioAnalyzer: RCTEventEmitter {
   
   private var audioEngine: AVAudioEngine?
   private var bus = 0
