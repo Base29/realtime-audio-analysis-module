@@ -14,7 +14,8 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "12.0" }
   s.source       = { :git => "https://github.com/your-repo/react-native-realtime-audio-analysis.git", :tag => "#{s.version}" }
 
-  s.source_files = "ios/**/*.{h,m,mm,swift}"
+  s.source_files = "ios/*.{h,m,mm,swift}"
+  s.exclude_files = "ios/__tests__/**/*"
   
   # Swift support
   s.swift_version = "5.0"

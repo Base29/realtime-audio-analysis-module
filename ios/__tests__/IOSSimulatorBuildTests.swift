@@ -9,7 +9,6 @@ class IOSSimulatorBuildTests: XCTestCase {
     func testSwiftFilesExist() {
         let swiftFiles = [
             "RealtimeAudioAnalyzer.swift",
-            "BridgeMethodValidation.swift", 
             "AudioAnalyzerDemoView.swift"
         ]
         

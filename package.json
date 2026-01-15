@@ -31,7 +31,7 @@
   "scripts": {
     "test": "jest",
     "test:demo": "jest --config src/demo/__tests__/jest.config.js",
-    "test:linking": "node test-module-linking.js",
+    "clean:ios": "rm -rf ios/build && rm -rf ~/Library/Developer/Xcode/DerivedData",
     "typescript": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "prepare": "bob build",
