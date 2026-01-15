@@ -1,6 +1,6 @@
 import { type AnalysisConfig } from './NativeRealtimeAudioAnalyzer';
-export { RichAudioDemo, useRealtimeAudioLevels } from './demo';
-export type { RichAudioDemoProps } from './demo';
+export { RichAudioDemo, SpectrumVisualizer, LevelMeter, useRealtimeAudioLevels, AudioPermissionManager, RingBuffer } from './demo';
+export type { RichAudioDemoProps, SpectrumVisualizerProps, LevelMeterProps, AudioLevelsHook, PermissionStatus, AnalysisConfig as DemoAnalysisConfig } from './demo';
 export type { AnalysisConfig };
 export interface AudioAnalysisEvent {
     frequencyData: number[];
