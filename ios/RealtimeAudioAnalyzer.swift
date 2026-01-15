@@ -97,10 +97,12 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
       reject("E_PERMISSION_DENIED", "Microphone permission denied", nil)
     case .undetermined:
       session.requestRecordPermission { granted in
-        if granted {
-          self.startEngine(resolve: resolve, reject: reject)
-        } else {
-          reject("E_PERMISSION_DENIED", "Microphone permission denied", nil)
+        DispatchQueue.main.async {
+          if granted {
+            self.startEngine(resolve: resolve, reject: reject)
+          } else {
+            reject("E_PERMISSION_DENIED", "Microphone permission denied", nil)
+          }
         }
       }
     @unknown default:
@@ -197,7 +199,7 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
       let session = AVAudioSession.sharedInstance()
       try session.setCategory(.playAndRecord,
                               mode: .voiceChat,
-                              options: [.defaultToSpeaker, .allowBluetooth])
+                              options: [.defaultToSpeaker, .allowBluetoothHFP])
       try session.setPreferredSampleRate(targetSampleRate)
 
       let preferredBufferDuration = Double(bufferSize) / targetSampleRate
@@ -337,23 +339,31 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     }
 
     // Emit
+    let payload: [String: Any] = [
+      "timestamp": now * 1000,
+      "rms": rms,
+      "peak": peak,
+      "volume": rms,
+      "fft": fftData,
+      "frequencyData": fftData,
+      "timeData": [],
+      "sampleRate": buffer.format.sampleRate,
+      "bufferSize": frameCount,
+      "channelCount": channelCount
+    ]
+    
+    // Send React Native events if bridge is available
     if bridge != nil {
-      let payload: [String: Any] = [
-        "timestamp": now * 1000,
-        "rms": rms,
-        "peak": peak,
-        "volume": rms,
-        "fft": fftData,
-        "frequencyData": fftData,
-        "timeData": [],
-        "sampleRate": buffer.format.sampleRate,
-        "bufferSize": frameCount,
-        "channelCount": channelCount
-      ]
-
       sendEvent(withName: "RealtimeAudioAnalyzer:onData", body: payload)
       sendEvent(withName: "AudioAnalysisData", body: payload)
     }
+    
+    // Also post to NotificationCenter for native iOS usage
+    NotificationCenter.default.post(
+      name: NSNotification.Name("RealtimeAudioAnalyzer:onData"),
+      object: self,
+      userInfo: payload
+    )
   }
 
   private func resample(_ input: [Float], targetCount: Int) -> [Float] {
