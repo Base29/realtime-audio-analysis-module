@@ -374,7 +374,7 @@ export default BouncyAnimationDemo;
 
 ```typescript
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { 
   useRealtimeAudioLevels,
   SpectrumVisualizer,
@@ -403,7 +403,7 @@ const CustomSpectrumDemo = () => {
         <SpectrumVisualizer 
           frequencyData={frequencyData}
           barCount={40}
-          style={customStyles.spectrum}
+          isAnalyzing={isAnalyzing}
         />
       </View>
 
@@ -414,7 +414,9 @@ const CustomSpectrumDemo = () => {
           <LevelMeter 
             rms={rms}
             peak={0}
-            style={customStyles.rmsMeter}
+            rmsSmoothed={rms}
+            peakSmoothed={0}
+            isAnalyzing={isAnalyzing}
           />
         </View>
         
@@ -423,7 +425,9 @@ const CustomSpectrumDemo = () => {
           <LevelMeter 
             rms={0}
             peak={peak}
-            style={customStyles.peakMeter}
+            rmsSmoothed={0}
+            peakSmoothed={peak}
+            isAnalyzing={isAnalyzing}
           />
         </View>
       </View>
@@ -465,9 +469,6 @@ const customStyles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#1a1a3a',
   },
-  spectrum: {
-    flex: 1,
-  },
   metersRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -481,14 +482,6 @@ const customStyles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 10,
     fontWeight: '600',
-  },
-  rmsMeter: {
-    width: 80,
-    height: 80,
-  },
-  peakMeter: {
-    width: 80,
-    height: 80,
   },
   controlsContainer: {
     alignItems: 'center',
@@ -512,238 +505,6 @@ const customStyles = StyleSheet.create({
 });
 
 export default CustomSpectrumDemo;
-```
-
-### Multi-View Dashboard
-
-```typescript
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { 
-  RichAudioDemo,
-  useRealtimeAudioLevels,
-  SpectrumVisualizer,
-  LevelMeter 
-} from 'react-native-realtime-audio-analysis';
-
-const MultiViewDashboard = () => {
-  const [activeView, setActiveView] = useState<'full' | 'spectrum' | 'meters' | 'debug'>('full');
-  
-  const {
-    frequencyData,
-    rms,
-    peak,
-    rmsSmoothed,
-    peakSmoothed,
-    sampleRate,
-    fftSize,
-    isAnalyzing,
-  } = useRealtimeAudioLevels();
-
-  const renderView = () => {
-    switch (activeView) {
-      case 'full':
-        return (
-          <RichAudioDemo
-            barCount={32}
-            showDebug={false}
-            autoStart={false}
-          />
-        );
-      
-      case 'spectrum':
-        return (
-          <SpectrumVisualizer 
-            frequencyData={frequencyData}
-            barCount={64}
-            style={{ flex: 1 }}
-          />
-        );
-      
-      case 'meters':
-        return (
-          <View style={dashboardStyles.metersGrid}>
-            <View style={dashboardStyles.meterItem}>
-              <Text style={dashboardStyles.meterTitle}>RMS (Raw)</Text>
-              <LevelMeter rms={rms} peak={0} style={dashboardStyles.gridMeter} />
-              <Text style={dashboardStyles.meterValue}>{(rms * 100).toFixed(1)}%</Text>
-            </View>
-            
-            <View style={dashboardStyles.meterItem}>
-              <Text style={dashboardStyles.meterTitle}>Peak (Raw)</Text>
-              <LevelMeter rms={0} peak={peak} style={dashboardStyles.gridMeter} />
-              <Text style={dashboardStyles.meterValue}>{(peak * 100).toFixed(1)}%</Text>
-            </View>
-            
-            <View style={dashboardStyles.meterItem}>
-              <Text style={dashboardStyles.meterTitle}>RMS (Smooth)</Text>
-              <LevelMeter rms={rmsSmoothed} peak={0} style={dashboardStyles.gridMeter} />
-              <Text style={dashboardStyles.meterValue}>{(rmsSmoothed * 100).toFixed(1)}%</Text>
-            </View>
-            
-            <View style={dashboardStyles.meterItem}>
-              <Text style={dashboardStyles.meterTitle}>Peak (Smooth)</Text>
-              <LevelMeter rms={0} peak={peakSmoothed} style={dashboardStyles.gridMeter} />
-              <Text style={dashboardStyles.meterValue}>{(peakSmoothed * 100).toFixed(1)}%</Text>
-            </View>
-          </View>
-        );
-      
-      case 'debug':
-        return (
-          <ScrollView style={dashboardStyles.debugContainer}>
-            <View style={dashboardStyles.debugSection}>
-              <Text style={dashboardStyles.debugTitle}>Audio Configuration</Text>
-              <Text style={dashboardStyles.debugText}>Sample Rate: {sampleRate}Hz</Text>
-              <Text style={dashboardStyles.debugText}>FFT Size: {fftSize}</Text>
-              <Text style={dashboardStyles.debugText}>Status: {isAnalyzing ? 'Active' : 'Stopped'}</Text>
-            </View>
-            
-            <View style={dashboardStyles.debugSection}>
-              <Text style={dashboardStyles.debugTitle}>Current Values</Text>
-              <Text style={dashboardStyles.debugText}>RMS: {rms.toFixed(4)}</Text>
-              <Text style={dashboardStyles.debugText}>Peak: {peak.toFixed(4)}</Text>
-              <Text style={dashboardStyles.debugText}>RMS Smoothed: {rmsSmoothed.toFixed(4)}</Text>
-              <Text style={dashboardStyles.debugText}>Peak Smoothed: {peakSmoothed.toFixed(4)}</Text>
-            </View>
-            
-            <View style={dashboardStyles.debugSection}>
-              <Text style={dashboardStyles.debugTitle}>Frequency Data</Text>
-              <Text style={dashboardStyles.debugText}>
-                Bins: {frequencyData.length}
-              </Text>
-              <Text style={dashboardStyles.debugText}>
-                Max Value: {Math.max(...frequencyData).toFixed(4)}
-              </Text>
-              <Text style={dashboardStyles.debugText}>
-                Avg Value: {(frequencyData.reduce((a, b) => a + b, 0) / frequencyData.length).toFixed(4)}
-              </Text>
-            </View>
-          </ScrollView>
-        );
-      
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <View style={dashboardStyles.container}>
-      {/* Tab Navigation */}
-      <View style={dashboardStyles.tabContainer}>
-        {['full', 'spectrum', 'meters', 'debug'].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[
-              dashboardStyles.tab,
-              activeView === tab && dashboardStyles.activeTab
-            ]}
-            onPress={() => setActiveView(tab as any)}
-          >
-            <Text style={[
-              dashboardStyles.tabText,
-              activeView === tab && dashboardStyles.activeTabText
-            ]}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Content Area */}
-      <View style={dashboardStyles.contentArea}>
-        {renderView()}
-      </View>
-    </View>
-  );
-};
-
-const dashboardStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#2a2a2a',
-    paddingHorizontal: 10,
-    paddingTop: 10,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#333333',
-    marginHorizontal: 2,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: '#007AFF',
-  },
-  tabText: {
-    color: '#cccccc',
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  activeTabText: {
-    color: '#ffffff',
-  },
-  contentArea: {
-    flex: 1,
-    padding: 20,
-  },
-  metersGrid: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  meterItem: {
-    alignItems: 'center',
-    margin: 20,
-  },
-  meterTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  gridMeter: {
-    width: 100,
-    height: 100,
-  },
-  meterValue: {
-    color: '#cccccc',
-    fontSize: 14,
-    marginTop: 10,
-  },
-  debugContainer: {
-    flex: 1,
-  },
-  debugSection: {
-    backgroundColor: '#2a2a2a',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-  },
-  debugTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  debugText: {
-    color: '#cccccc',
-    fontSize: 14,
-    marginBottom: 5,
-    fontFamily: 'monospace',
-  },
-});
-
-export default MultiViewDashboard;
 ```
 
 ## Integration Patterns

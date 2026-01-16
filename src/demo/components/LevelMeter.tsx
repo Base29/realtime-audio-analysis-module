@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text, Platform } from 'react-native';
 import { Animated } from 'react-native';
 import { LevelMeterProps } from '../types/interfaces';
 
@@ -210,6 +210,18 @@ const LevelMeter: React.FC<LevelMeterProps> = ({
     };
   }, []);
   
+  // Utility functions for dB conversion
+  const linearToDb = (linearValue: number): number => {
+    if (linearValue <= 0) return -Infinity;
+    return 20 * Math.log10(linearValue);
+  };
+
+  const formatDbValue = (dbValue: number): string => {
+    if (dbValue === -Infinity) return '-∞';
+    if (dbValue > 0) return `+${dbValue.toFixed(1)}`;
+    return `${dbValue.toFixed(1)}`;
+  };
+  
   // Generate gradient colors based on RMS level
   const getRmsGradientColors = (rmsLevel: number): [string, string] => {
     if (rmsLevel < 0.3) {
@@ -238,6 +250,10 @@ const LevelMeter: React.FC<LevelMeterProps> = ({
   const currentRms = isAnalyzing ? rmsSmoothed : 0;
   const [gradientStart, gradientEnd] = getRmsGradientColors(currentRms);
   const glowColor = getGlowColor(currentRms);
+  
+  // Calculate dB values for display
+  const rmsDb = linearToDb(currentRms);
+  const peakDb = linearToDb(isAnalyzing ? peakSmoothed : 0);
   
   return (
     <View style={styles.container}>
@@ -276,6 +292,12 @@ const LevelMeter: React.FC<LevelMeterProps> = ({
               },
             ]}
           />
+          
+          {/* dB Value Display in center */}
+          <View style={styles.dbValueContainer}>
+            <Text style={styles.dbValueText}>{formatDbValue(rmsDb)}</Text>
+            <Text style={styles.dbValueLabel}>RMS</Text>
+          </View>
         </Animated.View>
       </View>
       
@@ -293,6 +315,14 @@ const LevelMeter: React.FC<LevelMeterProps> = ({
             },
           ]}
         />
+        
+        {/* Peak dB value display */}
+        {isAnalyzing && peakDb > -Infinity && (
+          <View style={styles.peakDbContainer}>
+            <Text style={styles.peakDbText}>{formatDbValue(peakDb)}</Text>
+            <Text style={styles.peakDbLabel}>PEAK</Text>
+          </View>
+        )}
         
         {/* Peak level scale markers */}
         <View style={styles.scaleMarkers}>
@@ -358,12 +388,49 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     opacity: 0.6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dbValueContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dbValueText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  dbValueLabel: {
+    fontSize: 10,
+    color: '#ccc',
+    textAlign: 'center',
+    marginTop: 2,
   },
   peakContainer: {
     position: 'relative',
-    width: 20,
+    width: 60,
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  peakDbContainer: {
+    position: 'absolute',
+    top: -30,
+    alignItems: 'center',
+  },
+  peakDbText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  peakDbLabel: {
+    fontSize: 8,
+    color: '#ccc',
+    textAlign: 'center',
   },
   peakDot: {
     position: 'absolute',

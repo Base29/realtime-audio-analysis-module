@@ -73,16 +73,6 @@ Add the microphone permission to your `android/app/src/main/AndroidManifest.xml`
 
 **Note**: On Android 6.0+ (API level 23+), this permission requires runtime request, which the RichAudioDemo component handles automatically.
 
-### Step 3: Native Module Linking
-
-For React Native 0.60+, autolinking handles this automatically. For older versions:
-
-```bash
-npx react-native link react-native-realtime-audio-analysis
-```
-
-If autolinking fails, refer to the manual linking guide in the main documentation.
-
 ## Basic Usage
 
 ### Simple Integration
@@ -276,7 +266,7 @@ export default function CustomAudioScreen() {
         <SpectrumVisualizer 
           frequencyData={frequencyData}
           barCount={48}
-          style={styles.spectrum}
+          isAnalyzing={isAnalyzing}
         />
       </View>
 
@@ -287,7 +277,9 @@ export default function CustomAudioScreen() {
           <LevelMeter 
             rms={rms}
             peak={peak}
-            style={styles.meter}
+            rmsSmoothed={rms}
+            peakSmoothed={peak}
+            isAnalyzing={isAnalyzing}
           />
         </View>
         <View style={styles.meterColumn}>
@@ -295,7 +287,9 @@ export default function CustomAudioScreen() {
           <LevelMeter 
             rms={rmsSmoothed}
             peak={peakSmoothed}
-            style={styles.meter}
+            rmsSmoothed={rmsSmoothed}
+            peakSmoothed={peakSmoothed}
+            isAnalyzing={isAnalyzing}
           />
         </View>
       </View>
@@ -359,9 +353,6 @@ const styles = StyleSheet.create({
     height: 200,
     marginBottom: 20,
   },
-  spectrum: {
-    flex: 1,
-  },
   metersContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -374,10 +365,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     marginBottom: 10,
-  },
-  meter: {
-    width: 100,
-    height: 100,
   },
   controlsContainer: {
     flexDirection: 'row',
@@ -432,45 +419,6 @@ The `NSMicrophoneUsageDescription` is mandatory. Here are some example descripti
 <string>$(PRODUCT_NAME) needs microphone access to provide real-time audio feedback and visualization features.</string>
 ```
 
-#### iOS Permission States
-
-```typescript
-// Handle iOS-specific permission states
-const handleiOSPermissions = async () => {
-  const { permissionStatus, requestPermission } = useRealtimeAudioLevels();
-  
-  switch (permissionStatus) {
-    case 'undetermined':
-      // First time - show explanation before requesting
-      Alert.alert(
-        'Microphone Access',
-        'This app needs microphone access to provide audio visualization.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Enable', onPress: requestPermission }
-        ]
-      );
-      break;
-      
-    case 'denied':
-      // User denied - show settings option
-      Alert.alert(
-        'Microphone Access Denied',
-        'Please enable microphone access in Settings > Privacy > Microphone',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() }
-        ]
-      );
-      break;
-      
-    case 'granted':
-      // Permission granted - proceed with analysis
-      break;
-  }
-};
-```
-
 ### Android Specific
 
 #### Manifest Configuration
@@ -489,34 +437,6 @@ const handleiOSPermissions = async () => {
 <uses-feature 
     android:name="android.hardware.microphone" 
     android:required="false" />
-```
-
-#### Android Permission Handling
-
-```typescript
-import { PermissionsAndroid, Platform } from 'react-native';
-
-const handleAndroidPermissions = async () => {
-  if (Platform.OS !== 'android') return true;
-  
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      {
-        title: 'Microphone Permission',
-        message: 'This app needs microphone access for audio visualization',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      }
-    );
-    
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
-  } catch (err) {
-    console.warn('Permission request error:', err);
-    return false;
-  }
-};
 ```
 
 ## Performance Optimization
@@ -542,62 +462,13 @@ const getOptimalBarCount = (devicePerformance: 'low' | 'medium' | 'high') => {
 <RichAudioDemo barCount={getOptimalBarCount('medium')} />
 ```
 
-### Memory Management
-
-```typescript
-// The component automatically manages memory with Ring Buffer
-// But you can optimize further:
-
-const OptimizedAudioScreen = () => {
-  const [isVisible, setIsVisible] = useState(true);
-  
-  // Stop analysis when screen is not visible
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'background') {
-        setIsVisible(false);
-      } else if (nextAppState === 'active') {
-        setIsVisible(true);
-      }
-    });
-    
-    return () => subscription?.remove();
-  }, []);
-  
-  return (
-    <View>
-      {isVisible && (
-        <RichAudioDemo autoStart={isVisible} />
-      )}
-    </View>
-  );
-};
-```
-
-### Animation Performance
-
-```typescript
-// Reduce animation complexity on lower-end devices
-import { Platform } from 'react-native';
-
-const isLowEndDevice = () => {
-  // Simple heuristic - you might want more sophisticated detection
-  return Platform.OS === 'android' && Platform.Version < 26;
-};
-
-<RichAudioDemo 
-  barCount={isLowEndDevice() ? 16 : 32}
-  showDebug={false}  // Debug panel can impact performance
-/>
-```
-
 ## Error Handling
 
 ### Comprehensive Error Handling
 
 ```typescript
 import React, { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 
 const ErrorHandlingExample = () => {
   const [lastError, setLastError] = useState<string | null>(null);
@@ -645,48 +516,6 @@ const ErrorHandlingExample = () => {
 };
 ```
 
-### Error Recovery Strategies
-
-```typescript
-const ErrorRecoveryExample = () => {
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRecovering, setIsRecovering] = useState(false);
-  
-  const handleErrorWithRecovery = useCallback(async (error: Error) => {
-    console.error('Audio error:', error);
-    
-    if (retryCount < 3 && !isRecovering) {
-      setIsRecovering(true);
-      setRetryCount(prev => prev + 1);
-      
-      // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Reset component by remounting
-      setIsRecovering(false);
-    } else {
-      // Max retries reached - show permanent error
-      Alert.alert(
-        'Audio Unavailable',
-        'Audio visualization is currently unavailable. Please check your device settings and try again later.',
-        [{ text: 'OK' }]
-      );
-    }
-  }, [retryCount, isRecovering]);
-  
-  if (isRecovering) {
-    return <Text>Recovering audio analysis...</Text>;
-  }
-  
-  return (
-    <RichAudioDemo 
-      key={retryCount}  // Force remount on retry
-      onError={handleErrorWithRecovery}
-    />
-  );
-};
-```
-
 ## Testing
 
 ### Manual Testing Checklist
@@ -711,43 +540,5 @@ const ErrorRecoveryExample = () => {
 - [ ] Proper cleanup on component unmount
 - [ ] Background/foreground transitions work
 - [ ] Multiple start/stop cycles work correctly
-
-### Automated Testing
-
-```typescript
-// Example test setup
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { RichAudioDemo } from '../RichAudioDemo';
-
-describe('RichAudioDemo', () => {
-  it('should handle permission grant flow', async () => {
-    const onError = jest.fn();
-    const { getByText } = render(
-      <RichAudioDemo onError={onError} />
-    );
-    
-    // Mock permission granted
-    // ... test implementation
-    
-    await waitFor(() => {
-      expect(getByText('Start Analysis')).toBeTruthy();
-    });
-  });
-  
-  it('should display error for permission denial', async () => {
-    const onError = jest.fn();
-    const { getByText } = render(
-      <RichAudioDemo onError={onError} />
-    );
-    
-    // Mock permission denied
-    // ... test implementation
-    
-    await waitFor(() => {
-      expect(onError).toHaveBeenCalled();
-    });
-  });
-});
-```
 
 This usage guide provides comprehensive examples and best practices for integrating the Rich Audio Demo component into React Native applications, covering all the essential aspects from basic setup to advanced customization and error handling.

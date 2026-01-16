@@ -44,6 +44,40 @@ export default function App() { return <TestScreen />; }
 **Permissions**:
 Requires microphone access. See [Integration Guide](INTEGRATION_GUIDE.md) for complete setup instructions.
 
+## 📱 Rich Audio Demo Component
+
+**[🚀 Complete Demo Documentation](docs/demo/README.md)** - Ready-to-use React Native component with enhanced visuals
+
+The Rich Audio Demo is a comprehensive, production-ready component featuring:
+- **Real-time dB Value Display** with professional audio level indicators
+- **Enhanced Spectrum Visualizer** with frequency labels and dB scale markers  
+- **Session Statistics** tracking min/max/average values over time
+- **Cross-platform Permission Handling** with user-friendly prompts
+- **Performance Optimized** rendering with configurable quality settings
+
+### Quick Demo Setup
+
+```typescript
+import { RichAudioDemo } from 'react-native-realtime-audio-analysis';
+
+export default function App() {
+  return (
+    <RichAudioDemo
+      autoStart={true}
+      showDebug={false}
+      barCount={32}
+      onError={(error) => console.error('Audio error:', error)}
+    />
+  );
+}
+```
+
+**📚 Demo Documentation:**
+- **[Quick Start Guide](docs/demo/QUICK_START.md)** - Get running in minutes
+- **[Enhanced Features](docs/demo/ENHANCED_FEATURES.md)** - New dB display and visual improvements
+- **[Customization Examples](docs/demo/CUSTOMIZATION_EXAMPLES.md)** - Themes and layouts
+- **[Performance Guide](docs/demo/PERFORMANCE_GUIDE.md)** - Optimization strategies
+
 ## 📖 Documentation
 
 **[📚 Complete Documentation Index](docs/README.md)** - Browse all available documentation
@@ -54,6 +88,13 @@ Requires microphone access. See [Integration Guide](INTEGRATION_GUIDE.md) for co
 - **[Usage Guide](docs/USAGE.md)**: Complete guide for using the module with Android and iOS
 - **[API Reference](docs/API_REFERENCE.md)**: Full API documentation with examples and type definitions
 - **[Manual Linking Guide](docs/MANUAL_LINKING.md)**: Step-by-step manual linking instructions for both platforms
+
+### Demo Component
+- **[📱 Rich Audio Demo Documentation](docs/demo/README.md)**: Complete guide for the enhanced demo component with visual improvements
+- **[Quick Start](docs/demo/QUICK_START.md)**: Get the demo running in minutes
+- **[Enhanced Features](docs/demo/ENHANCED_FEATURES.md)**: New dB value display and visual enhancements
+- **[Customization Examples](docs/demo/CUSTOMIZATION_EXAMPLES.md)**: Copy-paste examples for different themes and layouts
+- **[Performance Guide](docs/demo/PERFORMANCE_GUIDE.md)**: Optimization strategies and best practices
 
 ### CLI Tools & Automation
 - **[Autolinking Guide](docs/AUTOLINKING.md)**: React Native autolinking compatibility and troubleshooting

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import { Animated } from 'react-native';
 import { SpectrumVisualizerProps } from '../types/interfaces';
 import { RingBuffer } from '../utils/RingBuffer';
@@ -71,6 +71,30 @@ const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
       spacing: barSpacing,
       maxHeight: 200, // Maximum bar height in pixels
     };
+  }, [barCount]);
+  
+  // Calculate frequency labels for display
+  const frequencyLabels = useMemo(() => {
+    const sampleRate = 44100; // Assume standard sample rate
+    const nyquist = sampleRate / 2;
+    const labels: { frequency: number; label: string; position: number }[] = [];
+    
+    // Generate frequency labels at key positions
+    const keyFrequencies = [100, 500, 1000, 2000, 5000, 10000, 15000];
+    
+    keyFrequencies.forEach(freq => {
+      if (freq <= nyquist) {
+        // Calculate position as percentage of total frequency range
+        const position = (freq / nyquist) * barCount;
+        const label = freq >= 1000 ? `${(freq / 1000).toFixed(0)}k` : `${freq}`;
+        
+        if (position >= 0 && position <= barCount) {
+          labels.push({ frequency: freq, label, position });
+        }
+      }
+    });
+    
+    return labels;
   }, [barCount]);
   
   // Generate color for bar based on frequency index and amplitude
@@ -256,8 +280,43 @@ const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
   
   return (
     <View style={styles.container}>
+      {/* Frequency Labels */}
+      <View style={styles.frequencyLabelsContainer}>
+        {frequencyLabels.map((labelInfo, index) => (
+          <View
+            key={index}
+            style={[
+              styles.frequencyLabel,
+              {
+                left: (labelInfo.position / barCount) * (screenWidth - 32) - 15, // Center the label
+              },
+            ]}
+          >
+            <Text style={styles.frequencyLabelText}>{labelInfo.label}Hz</Text>
+          </View>
+        ))}
+      </View>
+      
+      {/* Spectrum Bars */}
       <View style={[styles.barsContainer, { height: barDimensions.maxHeight }]}>
         {Array.from({ length: barCount }, (_, index) => renderBar(index))}
+      </View>
+      
+      {/* dB Scale on the side */}
+      <View style={styles.dbScale}>
+        {[-60, -40, -20, -6, 0].map((dbValue, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dbScaleItem,
+              {
+                bottom: ((dbValue + 60) / 60) * barDimensions.maxHeight - 8, // Position based on dB value
+              },
+            ]}
+          >
+            <Text style={styles.dbScaleText}>{dbValue}dB</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -268,6 +327,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 20,
+    position: 'relative',
+  },
+  frequencyLabelsContainer: {
+    position: 'relative',
+    width: screenWidth - 32,
+    height: 20,
+    marginBottom: 8,
+  },
+  frequencyLabel: {
+    position: 'absolute',
+    width: 30,
+    alignItems: 'center',
+  },
+  frequencyLabelText: {
+    fontSize: 10,
+    color: '#999',
+    textAlign: 'center',
   },
   barsContainer: {
     flexDirection: 'row',
@@ -303,6 +379,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 3,
     elevation: 5, // Android shadow
+  },
+  dbScale: {
+    position: 'absolute',
+    right: -40,
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  dbScaleItem: {
+    position: 'absolute',
+    right: 0,
+  },
+  dbScaleText: {
+    fontSize: 9,
+    color: '#666',
+    textAlign: 'right',
+    width: 35,
   },
 });
 

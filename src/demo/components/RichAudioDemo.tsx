@@ -40,6 +40,17 @@ const RichAudioDemo: React.FC<RichAudioDemoProps> = (props) => {
     averageFps: 0,
   });
   
+  // Enhanced audio statistics tracking
+  const [audioStats, setAudioStats] = React.useState({
+    rmsMin: 0,
+    rmsMax: 0,
+    rmsAvg: 0,
+    peakMin: 0,
+    peakMax: 0,
+    peakAvg: 0,
+    sampleCount: 0,
+  });
+  
   // Error state management
   const [displayError, setDisplayError] = React.useState<{
     type: 'permission' | 'analysis' | 'runtime' | 'performance';
@@ -126,12 +137,40 @@ const RichAudioDemo: React.FC<RichAudioDemoProps> = (props) => {
           averageFps: avgFps,
         };
       });
+      
+      // Update audio statistics
+      setAudioStats(prev => {
+        const currentRms = audioLevels.rms;
+        const currentPeak = audioLevels.peak;
+        const newSampleCount = prev.sampleCount + 1;
+        
+        return {
+          rmsMin: prev.sampleCount === 0 ? currentRms : Math.min(prev.rmsMin, currentRms),
+          rmsMax: prev.sampleCount === 0 ? currentRms : Math.max(prev.rmsMax, currentRms),
+          rmsAvg: (prev.rmsAvg * prev.sampleCount + currentRms) / newSampleCount,
+          peakMin: prev.sampleCount === 0 ? currentPeak : Math.min(prev.peakMin, currentPeak),
+          peakMax: prev.sampleCount === 0 ? currentPeak : Math.max(prev.peakMax, currentPeak),
+          peakAvg: (prev.peakAvg * prev.sampleCount + currentPeak) / newSampleCount,
+          sampleCount: newSampleCount,
+        };
+      });
     } else {
       // Reset metrics when not analyzing
       setPerformanceMetrics({
         updateCount: 0,
         lastUpdateTime: 0,
         averageFps: 0,
+      });
+      
+      // Reset audio statistics
+      setAudioStats({
+        rmsMin: 0,
+        rmsMax: 0,
+        rmsAvg: 0,
+        peakMin: 0,
+        peakMax: 0,
+        peakAvg: 0,
+        sampleCount: 0,
       });
     }
   }, [audioLevels.rms, audioLevels.peak, audioLevels.isAnalyzing]);
@@ -262,6 +301,25 @@ const RichAudioDemo: React.FC<RichAudioDemoProps> = (props) => {
   const handleDismissError = () => {
     setDisplayError(null);
     audioLevels.clearError();
+  };
+
+  // Utility functions for dB conversion and formatting
+  const linearToDb = (linearValue: number): number => {
+    if (linearValue <= 0) return -Infinity;
+    return 20 * Math.log10(linearValue);
+  };
+
+  const formatDbValue = (dbValue: number): string => {
+    if (dbValue === -Infinity) return '-∞ dB';
+    if (dbValue > 0) return `+${dbValue.toFixed(1)} dB`;
+    return `${dbValue.toFixed(1)} dB`;
+  };
+
+  const getDbColor = (dbValue: number): string => {
+    if (dbValue === -Infinity || dbValue < -40) return '#4ade80'; // Green for low levels
+    if (dbValue < -20) return '#fbbf24'; // Yellow for medium levels
+    if (dbValue < -6) return '#f59e0b'; // Orange for high levels
+    return '#ef4444'; // Red for very high levels
   };
 
   // Handle start/stop analysis with comprehensive error handling
@@ -766,6 +824,97 @@ const RichAudioDemo: React.FC<RichAudioDemoProps> = (props) => {
     );
   };
 
+  // Render enhanced audio level display with dB values and statistics
+  const renderAudioLevelDisplay = () => {
+    if (audioLevels.permissionStatus !== 'granted') {
+      return null;
+    }
+
+    const rmsDb = linearToDb(audioLevels.rms);
+    const peakDb = linearToDb(audioLevels.peak);
+    const rmsSmoothedDb = linearToDb(audioLevels.rmsSmoothed);
+    const peakSmoothedDb = linearToDb(audioLevels.peakSmoothed);
+
+    return (
+      <View style={styles.audioLevelDisplay}>
+        <Text style={styles.audioLevelTitle}>Audio Levels</Text>
+        
+        {/* Current dB Values */}
+        <View style={styles.dbValuesContainer}>
+          <View style={styles.dbValueItem}>
+            <Text style={styles.dbValueLabel}>RMS Level</Text>
+            <Text style={[styles.dbValueText, { color: getDbColor(rmsDb) }]}>
+              {formatDbValue(rmsDb)}
+            </Text>
+            <Text style={styles.dbValueSubtext}>
+              Linear: {audioLevels.rms.toFixed(3)}
+            </Text>
+          </View>
+          
+          <View style={styles.dbValueItem}>
+            <Text style={styles.dbValueLabel}>Peak Level</Text>
+            <Text style={[styles.dbValueText, { color: getDbColor(peakDb) }]}>
+              {formatDbValue(peakDb)}
+            </Text>
+            <Text style={styles.dbValueSubtext}>
+              Linear: {audioLevels.peak.toFixed(3)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Smoothed Values (if smoothing is enabled) */}
+        {audioLevels.smoothingEnabled && (
+          <View style={styles.smoothedValuesContainer}>
+            <Text style={styles.smoothedValuesTitle}>Smoothed Values</Text>
+            <View style={styles.dbValuesContainer}>
+              <View style={styles.dbValueItem}>
+                <Text style={styles.dbValueLabel}>RMS (Smoothed)</Text>
+                <Text style={[styles.dbValueTextSmall, { color: getDbColor(rmsSmoothedDb) }]}>
+                  {formatDbValue(rmsSmoothedDb)}
+                </Text>
+              </View>
+              
+              <View style={styles.dbValueItem}>
+                <Text style={styles.dbValueLabel}>Peak (Smoothed)</Text>
+                <Text style={[styles.dbValueTextSmall, { color: getDbColor(peakSmoothedDb) }]}>
+                  {formatDbValue(peakSmoothedDb)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Audio Statistics */}
+        {audioStats.sampleCount > 0 && (
+          <View style={styles.audioStatsContainer}>
+            <Text style={styles.audioStatsTitle}>Session Statistics</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>RMS Min</Text>
+                <Text style={styles.statValue}>{formatDbValue(linearToDb(audioStats.rmsMin))}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>RMS Max</Text>
+                <Text style={styles.statValue}>{formatDbValue(linearToDb(audioStats.rmsMax))}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>RMS Avg</Text>
+                <Text style={styles.statValue}>{formatDbValue(linearToDb(audioStats.rmsAvg))}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Peak Max</Text>
+                <Text style={styles.statValue}>{formatDbValue(linearToDb(audioStats.peakMax))}</Text>
+              </View>
+            </View>
+            <Text style={styles.sampleCountText}>
+              Samples: {audioStats.sampleCount.toLocaleString()}
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Error Display - shown at top when errors occur */}
@@ -777,6 +926,9 @@ const RichAudioDemo: React.FC<RichAudioDemoProps> = (props) => {
       {/* Main audio visualization - shown when permission granted */}
       {audioLevels.permissionStatus === 'granted' && (
         <>
+          {/* Enhanced Audio Level Display with dB values */}
+          {renderAudioLevelDisplay()}
+          
           {/* Spectrum Visualizer */}
           <View style={styles.visualizerContainer}>
             <SpectrumVisualizer
@@ -1132,6 +1284,110 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  
+  // Enhanced Audio Level Display styles
+  audioLevelDisplay: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  audioLevelTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  dbValuesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  dbValueItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  dbValueLabel: {
+    fontSize: 12,
+    color: '#ccc',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  dbValueText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  dbValueTextSmall: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  dbValueSubtext: {
+    fontSize: 10,
+    color: '#999',
+    marginTop: 2,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  smoothedValuesContainer: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  smoothedValuesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  audioStatsContainer: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 12,
+  },
+  audioStatsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34C759',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#ccc',
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  sampleCountText: {
+    fontSize: 10,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });
 
