@@ -13,14 +13,6 @@ A comprehensive React Native demo component showcasing the full functionality of
 - **[Customization Examples](./CUSTOMIZATION_EXAMPLES.md)** - Copy-paste examples for different themes and layouts
 - **[Performance Guide](./PERFORMANCE_GUIDE.md)** - Performance optimization strategies and best practices
 
-### API Reference
-- **[Component API](./API_REFERENCE.md)** - Complete API documentation for all demo components
-- **[Props Reference](./PROPS_REFERENCE.md)** - Detailed props documentation with examples
-
-### Advanced Topics
-- **[Testing Guide](./TESTING_GUIDE.md)** - Testing strategies and examples for the demo components
-- **[Architecture](./ARCHITECTURE.md)** - Internal architecture and design decisions
-
 ## 🚀 Quick Start
 
 ```typescript
