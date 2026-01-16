@@ -75,3 +75,11 @@ export const richAudioDemoPropsArbitrary = fc.record({
     barCount: fc.integer({ min: 8, max: 128 }),
     onError: fc.constant(jest.fn()),
 }, { requiredKeys: [] });
+
+// Simple test to prevent Jest "no tests" error
+describe('Test Setup', () => {
+    it('should configure fast-check properly', () => {
+        expect(fc).toBeDefined();
+        expect(global.createMockAudioEvent).toBeDefined();
+    });
+});

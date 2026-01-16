@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Accelerate
 import React
+import os.log
 
 @objc(RealtimeAudioAnalyzer)
 class RealtimeAudioAnalyzer: RCTEventEmitter {
@@ -9,6 +10,10 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
   private var audioEngine: AVAudioEngine?
   private var bus = 0
   private var running = false
+  
+  // Debug logging
+  private static let logger = OSLog(subsystem: "com.realtimeaudio", category: "RealtimeAudioAnalyzer")
+  private var debugLoggingEnabled: Bool = false
 
   // Config
   private var bufferSize: UInt32 = 1024
@@ -35,6 +40,171 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
   private var zerosImag: [Float] = []
   private var magnitudes: [Float] = []
 
+  // MARK: - Error Handling and Logging Utilities
+  
+  private func logMethodCall(_ methodName: String, parameters: [String: Any]? = nil) {
+    guard debugLoggingEnabled else { return }
+    
+    var logMessage = "Method called: \(methodName)"
+    if let params = parameters {
+      logMessage += " with parameters: \(params)"
+    }
+    
+    os_log("%{public}@", log: Self.logger, type: .info, logMessage)
+  }
+  
+  private func logMethodResult(_ methodName: String, success: Bool, error: String? = nil) {
+    guard debugLoggingEnabled else { return }
+    
+    let status = success ? "SUCCESS" : "FAILED"
+    var logMessage = "Method \(methodName) result: \(status)"
+    if let errorMsg = error {
+      logMessage += " - Error: \(errorMsg)"
+    }
+    
+    os_log("%{public}@", log: Self.logger, type: success ? .info : .error, logMessage)
+  }
+  
+  private func validateConfigParameter(_ config: NSDictionary?) -> (isValid: Bool, error: String?) {
+    guard let config = config else {
+      return (false, "Configuration parameter cannot be nil")
+    }
+    
+    // Validate fftSize if provided
+    if let fftSizeValue = config["fftSize"] as? NSNumber {
+      let fftSizeInt = fftSizeValue.intValue
+      if fftSizeInt < 64 || fftSizeInt > 16384 {
+        return (false, "fftSize must be between 64 and 16384, got: \(fftSizeInt)")
+      }
+      // Check if it's a power of 2 for optimal FFT performance
+      if fftSizeInt & (fftSizeInt - 1) != 0 {
+        os_log("Warning: fftSize %d is not a power of 2, performance may be suboptimal", log: Self.logger, type: .default, fftSizeInt)
+      }
+    }
+    
+    // Validate sampleRate if provided
+    if let sampleRate = config["sampleRate"] as? NSNumber {
+      let rate = sampleRate.doubleValue
+      if rate < 8000 || rate > 96000 {
+        return (false, "sampleRate must be between 8000 and 96000 Hz, got: \(rate)")
+      }
+    }
+    
+    // Validate smoothing if provided
+    if let smoothing = config["smoothing"] as? NSNumber {
+      let smoothingValue = smoothing.doubleValue
+      if smoothingValue < 0 || smoothingValue > 1 {
+        return (false, "smoothing must be between 0.0 and 1.0, got: \(smoothingValue)")
+      }
+    }
+    
+    // Validate bufferSize if provided
+    if let bufferSize = config["bufferSize"] as? NSNumber {
+      let bufSize = bufferSize.intValue
+      if bufSize < 256 || bufSize > 8192 {
+        return (false, "bufferSize must be between 256 and 8192, got: \(bufSize)")
+      }
+    }
+    
+    // Validate callbackRateHz if provided
+    if let callbackRate = config["callbackRateHz"] as? NSNumber {
+      let rate = callbackRate.doubleValue
+      if rate < 1 || rate > 120 {
+        return (false, "callbackRateHz must be between 1 and 120, got: \(rate)")
+      }
+    }
+    
+    // Validate downsampleBins if provided
+    if let downsampleBins = config["downsampleBins"] as? NSNumber {
+      let bins = downsampleBins.intValue
+      if bins != -1 && bins <= 0 {
+        return (false, "downsampleBins must be -1 (disabled) or a positive integer, got: \(bins)")
+      }
+    }
+    
+    return (true, nil)
+  }
+  
+  private func validateSmoothingParameters(enabled: Bool, factor: NSNumber?) -> (isValid: Bool, error: String?) {
+    guard let factor = factor else {
+      return (false, "Smoothing factor parameter cannot be nil")
+    }
+    
+    let factorValue = factor.floatValue
+    if factorValue < 0.0 || factorValue > 1.0 {
+      return (false, "Smoothing factor must be between 0.0 and 1.0, got: \(factorValue)")
+    }
+    
+    if enabled && factorValue == 0.0 {
+      os_log("Warning: smoothing enabled but factor is 0.0, no smoothing will be applied", log: Self.logger, type: .default)
+    }
+    
+    return (true, nil)
+  }
+  
+  private func validateFftConfigParameters(fftSize: NSNumber?, downsampleBins: NSNumber?) -> (isValid: Bool, error: String?) {
+    guard let fftSize = fftSize else {
+      return (false, "FFT size parameter cannot be nil")
+    }
+    
+    guard let downsampleBins = downsampleBins else {
+      return (false, "Downsample bins parameter cannot be nil")
+    }
+    
+    let fftSizeInt = fftSize.intValue
+    let downsampleBinsInt = downsampleBins.intValue
+    
+    // Validate fftSize
+    if fftSizeInt < 64 || fftSizeInt > 16384 {
+      return (false, "FFT size must be between 64 and 16384, got: \(fftSizeInt)")
+    }
+    
+    // Check if it's a power of 2
+    if fftSizeInt & (fftSizeInt - 1) != 0 {
+      os_log("Warning: fftSize %d is not a power of 2, performance may be suboptimal", log: Self.logger, type: .default, fftSizeInt)
+    }
+    
+    // Validate downsampleBins
+    if downsampleBinsInt != -1 && (downsampleBinsInt <= 0 || downsampleBinsInt > fftSizeInt / 2) {
+      return (false, "Downsample bins must be -1 (disabled) or between 1 and \(fftSizeInt / 2), got: \(downsampleBinsInt)")
+    }
+    
+    return (true, nil)
+  }
+  
+  private func handleAudioEngineError(_ error: Error, operation: String) -> (code: String, message: String) {
+    let nsError = error as NSError
+    
+    switch nsError.code {
+    case AVAudioSession.ErrorCode.cannotStartPlaying.rawValue:
+      return ("E_AUDIO_SESSION_START_FAILED", "Cannot start audio session for \(operation): \(error.localizedDescription)")
+    case AVAudioSession.ErrorCode.cannotStartRecording.rawValue:
+      return ("E_AUDIO_SESSION_RECORD_FAILED", "Cannot start recording for \(operation): \(error.localizedDescription)")
+    case AVAudioSession.ErrorCode.resourceNotAvailable.rawValue:
+      return ("E_AUDIO_RESOURCE_UNAVAILABLE", "Audio resource not available for \(operation): \(error.localizedDescription)")
+    case AVAudioSession.ErrorCode.incompatibleCategory.rawValue:
+      return ("E_AUDIO_CATEGORY_INCOMPATIBLE", "Incompatible audio category for \(operation): \(error.localizedDescription)")
+    default:
+      // Check for AVAudioEngine specific errors
+      if nsError.domain == NSOSStatusErrorDomain {
+        switch OSStatus(nsError.code) {
+        case kAudioUnitErr_InvalidProperty:
+          return ("E_AUDIO_ENGINE_INVALID_PROPERTY", "Invalid audio engine property for \(operation): \(error.localizedDescription)")
+        case kAudioUnitErr_PropertyNotWritable:
+          return ("E_AUDIO_ENGINE_PROPERTY_NOT_WRITABLE", "Audio engine property not writable for \(operation): \(error.localizedDescription)")
+        case kAudioUnitErr_InvalidParameter:
+          return ("E_AUDIO_ENGINE_INVALID_PARAMETER", "Invalid audio engine parameter for \(operation): \(error.localizedDescription)")
+        case kAudioUnitErr_NoConnection:
+          return ("E_AUDIO_ENGINE_NO_CONNECTION", "No audio engine connection for \(operation): \(error.localizedDescription)")
+        default:
+          return ("E_AUDIO_ENGINE_ERROR", "Audio engine error for \(operation) (code: \(nsError.code)): \(error.localizedDescription)")
+        }
+      }
+      
+      return ("E_UNKNOWN_AUDIO_ERROR", "Unknown audio error for \(operation): \(error.localizedDescription)")
+    }
+  }
+
   // MARK: - RN Module Plumbing (Swift-safe overrides)
 
   // ✅ Fix 1: moduleName must be override in Swift (RN already defines it)
@@ -56,6 +226,40 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     return DispatchQueue.global(qos: .userInitiated)
   }
 
+  // MARK: - React Native Method Exports
+  
+  // Ensure all methods are properly exported to the bridge
+  @objc override func constantsToExport() -> [AnyHashable : Any]! {
+    return [
+      "moduleName": "RealtimeAudioAnalyzer",
+      "supportedMethods": [
+        "startAnalysis", "stopAnalysis", "isAnalyzing",
+        "start", "stop", "isRunning", 
+        "getAnalysisConfig", "setSmoothing", "setFftConfig",
+        "enableDebugLogging", "disableDebugLogging"
+      ]
+    ]
+  }
+  
+  // MARK: - Debug Logging Control
+  
+  @objc(enableDebugLogging:withRejecter:)
+  func enableDebugLogging(resolve: @escaping RCTPromiseResolveBlock,
+                         reject: @escaping RCTPromiseRejectBlock) {
+    debugLoggingEnabled = true
+    logMethodCall("enableDebugLogging")
+    logMethodResult("enableDebugLogging", success: true)
+    resolve(nil)
+  }
+  
+  @objc(disableDebugLogging:withRejecter:)
+  func disableDebugLogging(resolve: @escaping RCTPromiseResolveBlock,
+                          reject: @escaping RCTPromiseRejectBlock) {
+    logMethodCall("disableDebugLogging")
+    debugLoggingEnabled = false
+    resolve(nil)
+  }
+
   // MARK: - Cleanup
 
   private func cleanupFft() {
@@ -69,24 +273,75 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     cleanupFft()
   }
 
-  // MARK: - Public API
+  // MARK: - Public API (Primary Methods)
 
-  @objc(start:withResolver:withRejecter:)
-  func start(options: NSDictionary,
-             resolve: @escaping RCTPromiseResolveBlock,
-             reject: @escaping RCTPromiseRejectBlock) {
+  @objc(startAnalysis:withResolver:withRejecter:)
+  func startAnalysis(config: NSDictionary,
+                     resolve: @escaping RCTPromiseResolveBlock,
+                     reject: @escaping RCTPromiseRejectBlock) {
 
-    if running { return resolve(nil) }
+    logMethodCall("startAnalysis", parameters: config as? [String: Any])
 
-    // Options
-    if let bufSize = options["bufferSize"] as? Int { bufferSize = UInt32(bufSize) }
-    if let sRate = options["sampleRate"] as? Double { targetSampleRate = sRate }
-    if let cbRate = options["callbackRateHz"] as? Double { callbackRateHz = cbRate }
-    if let emit = options["emitFft"] as? Bool { emitFft = emit }
-    if let se = options["smoothingEnabled"] as? Bool { smoothingEnabled = se }
-    if let sf = options["smoothingFactor"] as? Double { smoothingFactor = Float(sf) }
-    if let ds = options["downsampleBins"] as? Int { downsampleBins = ds }
-    if let fs = options["fftSize"] as? Int { fftSize = fs }
+    if running { 
+      logMethodResult("startAnalysis", success: true, error: "Already running")
+      resolve(nil)
+      return 
+    }
+    
+    // Validate configuration parameters
+    let validation = validateConfigParameter(config)
+    if !validation.isValid {
+      let errorMsg = validation.error ?? "Invalid configuration"
+      logMethodResult("startAnalysis", success: false, error: errorMsg)
+      reject("E_INVALID_CONFIG", errorMsg, nil)
+      return
+    }
+
+    // Options parsing with validation - match TypeScript AnalysisConfig interface
+    if let fftSizeValue = config["fftSize"] as? NSNumber {
+      let newFftSize = max(64, min(16384, fftSizeValue.intValue)) // Validate range
+      fftSize = newFftSize
+    }
+    if let sRate = config["sampleRate"] as? NSNumber { 
+      targetSampleRate = max(8000, min(96000, sRate.doubleValue)) // Validate range
+    }
+    if let smoothingValue = config["smoothing"] as? NSNumber {
+      let smoothingDouble = smoothingValue.doubleValue
+      smoothingFactor = Float(max(0, min(1, smoothingDouble))) // Validate range
+      smoothingEnabled = smoothingDouble > 0
+    }
+    if let windowFunc = config["windowFunction"] as? String {
+      // Store window function preference (currently only hanning is implemented)
+      // Future enhancement: support different window functions
+      if windowFunc != "hanning" {
+        os_log("Warning: Only 'hanning' window function is currently supported, got: %{public}@", log: Self.logger, type: .default, windowFunc)
+      }
+    }
+    
+    // Legacy support for additional config options
+    if let bufSize = config["bufferSize"] as? NSNumber { 
+      bufferSize = UInt32(max(256, min(8192, bufSize.intValue))) // Validate range
+    }
+    if let cbRate = config["callbackRateHz"] as? NSNumber { 
+      callbackRateHz = max(1, min(120, cbRate.doubleValue)) // Validate range
+    }
+    if let emit = config["emitFft"] as? Bool { emitFft = emit }
+    if let se = config["smoothingEnabled"] as? Bool { 
+      smoothingEnabled = se 
+      // If smoothingEnabled is explicitly set to false, ensure smoothing is 0
+      if !se {
+        smoothingFactor = 0.0
+      }
+    }
+    if let sf = config["smoothingFactor"] as? NSNumber { 
+      let newFactor = Float(max(0, min(1, sf.doubleValue))) // Validate range
+      smoothingFactor = newFactor
+      // If smoothingFactor is set to 0, disable smoothing
+      if newFactor == 0.0 {
+        smoothingEnabled = false
+      }
+    }
+    if let ds = config["downsampleBins"] as? NSNumber { downsampleBins = ds.intValue }
 
     // Permissions
     let session = AVAudioSession.sharedInstance()
@@ -94,101 +349,172 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     case .granted:
       startEngine(resolve: resolve, reject: reject)
     case .denied:
-      reject("E_PERMISSION_DENIED", "Microphone permission denied", nil)
+      let errorMsg = "Microphone permission denied"
+      logMethodResult("startAnalysis", success: false, error: errorMsg)
+      reject("E_PERMISSION_DENIED", errorMsg, nil)
     case .undetermined:
       session.requestRecordPermission { granted in
         DispatchQueue.main.async {
           if granted {
             self.startEngine(resolve: resolve, reject: reject)
           } else {
-            reject("E_PERMISSION_DENIED", "Microphone permission denied", nil)
+            let errorMsg = "Microphone permission denied by user"
+            self.logMethodResult("startAnalysis", success: false, error: errorMsg)
+            reject("E_PERMISSION_DENIED", errorMsg, nil)
           }
         }
       }
     @unknown default:
-      reject("E_UNKNOWN", "Unknown permission state", nil)
+      let errorMsg = "Unknown permission state"
+      logMethodResult("startAnalysis", success: false, error: errorMsg)
+      reject("E_UNKNOWN_PERMISSION", errorMsg, nil)
     }
-  }
-
-  @objc(stop:withRejecter:)
-  func stop(resolve: @escaping RCTPromiseResolveBlock,
-            reject: @escaping RCTPromiseRejectBlock) {
-
-    guard running else { resolve(nil); return }
-
-    audioEngine?.inputNode.removeTap(onBus: bus)
-    audioEngine?.stop()
-    audioEngine = nil
-
-    do {
-      try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    } catch {
-      // non-fatal
-    }
-
-    cleanupFft()
-    running = false
-    resolve(nil)
-  }
-
-  @objc(isRunning:withRejecter:)
-  func isRunning(resolve: @escaping RCTPromiseResolveBlock,
-                 reject: @escaping RCTPromiseRejectBlock) {
-    resolve(running)
-  }
-
-  @objc(setSmoothing:factor:withResolver:withRejecter:)
-  func setSmoothing(enabled: Bool,
-                    factor: Float,
-                    resolve: @escaping RCTPromiseResolveBlock,
-                    reject: @escaping RCTPromiseRejectBlock) {
-    smoothingEnabled = enabled
-    smoothingFactor = max(0, min(1, factor))
-    resolve(nil)
-  }
-
-  @objc(setFftConfig:downsampleBins:withResolver:withRejecter:)
-  func setFftConfig(fftSize: Int,
-                    downsampleBins: Int,
-                    resolve: @escaping RCTPromiseResolveBlock,
-                    reject: @escaping RCTPromiseRejectBlock) {
-    // Store only (dynamic resize in-flight is risky). Recommend restart to apply.
-    self.fftSize = fftSize
-    self.downsampleBins = downsampleBins
-    resolve(nil)
-  }
-
-  // Compatibility aliases
-  @objc(startAnalysis:withResolver:withRejecter:)
-  func startAnalysis(config: NSDictionary,
-                     resolve: @escaping RCTPromiseResolveBlock,
-                     reject: @escaping RCTPromiseRejectBlock) {
-    start(options: config, resolve: resolve, reject: reject)
   }
 
   @objc(stopAnalysis:withRejecter:)
   func stopAnalysis(resolve: @escaping RCTPromiseResolveBlock,
                     reject: @escaping RCTPromiseRejectBlock) {
-    stop(resolve: resolve, reject: reject)
+
+    logMethodCall("stopAnalysis")
+
+    guard running else { 
+      logMethodResult("stopAnalysis", success: true, error: "Already stopped")
+      resolve(nil)
+      return 
+    }
+
+    do {
+      // Clean up audio engine
+      audioEngine?.inputNode.removeTap(onBus: bus)
+      audioEngine?.stop()
+      audioEngine = nil
+
+      // Deactivate audio session
+      try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+      
+      // Clean up FFT resources
+      cleanupFft()
+      running = false
+      
+      logMethodResult("stopAnalysis", success: true)
+      resolve(nil)
+    } catch {
+      // Even if session deactivation fails, we should still clean up and mark as stopped
+      cleanupFft()
+      running = false
+      
+      let (errorCode, errorMessage) = handleAudioEngineError(error, operation: "stop analysis")
+      logMethodResult("stopAnalysis", success: false, error: errorMessage)
+      reject(errorCode, errorMessage, error)
+    }
   }
 
   @objc(isAnalyzing:withRejecter:)
   func isAnalyzing(resolve: @escaping RCTPromiseResolveBlock,
                    reject: @escaping RCTPromiseRejectBlock) {
+    logMethodCall("isAnalyzing")
+    logMethodResult("isAnalyzing", success: true)
     resolve(running)
+  }
+
+  @objc(setSmoothing:factor:withResolver:withRejecter:)
+  func setSmoothing(enabled: Bool,
+                    factor: NSNumber,
+                    resolve: @escaping RCTPromiseResolveBlock,
+                    reject: @escaping RCTPromiseRejectBlock) {
+    
+    logMethodCall("setSmoothing", parameters: ["enabled": enabled, "factor": factor])
+    
+    // Validate parameters
+    let validation = validateSmoothingParameters(enabled: enabled, factor: factor)
+    if !validation.isValid {
+      let errorMsg = validation.error ?? "Invalid smoothing parameters"
+      logMethodResult("setSmoothing", success: false, error: errorMsg)
+      reject("E_INVALID_PARAMETER", errorMsg, nil)
+      return
+    }
+    
+    let factorFloat = factor.floatValue
+    smoothingEnabled = enabled
+    smoothingFactor = factorFloat
+    
+    logMethodResult("setSmoothing", success: true)
+    resolve(nil)
+  }
+
+  @objc(setFftConfig:downsampleBins:withResolver:withRejecter:)
+  func setFftConfig(fftSize: NSNumber,
+                    downsampleBins: NSNumber,
+                    resolve: @escaping RCTPromiseResolveBlock,
+                    reject: @escaping RCTPromiseRejectBlock) {
+    
+    logMethodCall("setFftConfig", parameters: ["fftSize": fftSize, "downsampleBins": downsampleBins])
+    
+    // Validate parameters
+    let validation = validateFftConfigParameters(fftSize: fftSize, downsampleBins: downsampleBins)
+    if !validation.isValid {
+      let errorMsg = validation.error ?? "Invalid FFT configuration parameters"
+      logMethodResult("setFftConfig", success: false, error: errorMsg)
+      reject("E_INVALID_PARAMETER", errorMsg, nil)
+      return
+    }
+    
+    let fftSizeInt = fftSize.intValue
+    let downsampleBinsInt = downsampleBins.intValue
+    
+    // Store only (dynamic resize in-flight is risky). Recommend restart to apply.
+    self.fftSize = fftSizeInt
+    self.downsampleBins = downsampleBinsInt
+    
+    logMethodResult("setFftConfig", success: true)
+    resolve(nil)
+  }
+
+  // MARK: - Legacy Method Aliases (for backward compatibility)
+
+  @objc(start:withResolver:withRejecter:)
+  func start(options: NSDictionary,
+             resolve: @escaping RCTPromiseResolveBlock,
+             reject: @escaping RCTPromiseRejectBlock) {
+    logMethodCall("start (legacy alias)", parameters: options as? [String: Any])
+    startAnalysis(config: options, resolve: resolve, reject: reject)
+  }
+
+  @objc(stop:withRejecter:)
+  func stop(resolve: @escaping RCTPromiseResolveBlock,
+            reject: @escaping RCTPromiseRejectBlock) {
+    logMethodCall("stop (legacy alias)")
+    stopAnalysis(resolve: resolve, reject: reject)
+  }
+
+  @objc(isRunning:withRejecter:)
+  func isRunning(resolve: @escaping RCTPromiseResolveBlock,
+                 reject: @escaping RCTPromiseRejectBlock) {
+    logMethodCall("isRunning (legacy alias)")
+    isAnalyzing(resolve: resolve, reject: reject)
   }
 
   @objc(getAnalysisConfig:withRejecter:)
   func getAnalysisConfig(resolve: @escaping RCTPromiseResolveBlock,
                          reject: @escaping RCTPromiseRejectBlock) {
-    resolve([
+    logMethodCall("getAnalysisConfig")
+    
+    let config: [String: Any] = [
       "fftSize": fftSize,
       "sampleRate": targetSampleRate,
-      "bufferSize": bufferSize,
+      "smoothing": smoothingEnabled ? Double(smoothingFactor) : 0.0,
+      "windowFunction": "hanning", // Default window function
+      // Additional configuration state for completeness
+      "bufferSize": Int(bufferSize),
+      "callbackRateHz": callbackRateHz,
+      "emitFft": emitFft,
       "smoothingEnabled": smoothingEnabled,
-      "smoothingFactor": smoothingFactor,
+      "smoothingFactor": Double(smoothingFactor),
       "downsampleBins": downsampleBins
-    ])
+    ]
+    
+    logMethodResult("getAnalysisConfig", success: true)
+    resolve(config)
   }
 
   // MARK: - Engine
@@ -197,32 +523,93 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
                            reject: @escaping RCTPromiseRejectBlock) {
     do {
       let session = AVAudioSession.sharedInstance()
-      try session.setCategory(.playAndRecord,
-                              mode: .voiceChat,
-                              options: [.defaultToSpeaker, .allowBluetoothHFP])
-      try session.setPreferredSampleRate(targetSampleRate)
+      
+      // Configure audio session with detailed error handling
+      do {
+        try session.setCategory(.playAndRecord,
+                                mode: .voiceChat,
+                                options: [.defaultToSpeaker, .allowBluetoothHFP])
+      } catch {
+        let (errorCode, errorMessage) = handleAudioEngineError(error, operation: "set audio session category")
+        logMethodResult("startEngine", success: false, error: errorMessage)
+        reject(errorCode, errorMessage, error)
+        return
+      }
+      
+      do {
+        try session.setPreferredSampleRate(targetSampleRate)
+      } catch {
+        // Log warning but continue - this is not critical
+        os_log("Warning: Could not set preferred sample rate to %f: %{public}@", log: Self.logger, type: .default, targetSampleRate, error.localizedDescription)
+      }
 
       let preferredBufferDuration = Double(bufferSize) / targetSampleRate
-      try session.setPreferredIOBufferDuration(preferredBufferDuration)
-      try session.setActive(true)
+      do {
+        try session.setPreferredIOBufferDuration(preferredBufferDuration)
+      } catch {
+        // Log warning but continue - this is not critical
+        os_log("Warning: Could not set preferred buffer duration to %f: %{public}@", log: Self.logger, type: .default, preferredBufferDuration, error.localizedDescription)
+      }
+      
+      do {
+        try session.setActive(true)
+      } catch {
+        let (errorCode, errorMessage) = handleAudioEngineError(error, operation: "activate audio session")
+        logMethodResult("startEngine", success: false, error: errorMessage)
+        reject(errorCode, errorMessage, error)
+        return
+      }
 
       let engine = AVAudioEngine()
       audioEngine = engine
 
       let inputNode = engine.inputNode
       let hardwareFormat = inputNode.inputFormat(forBus: bus)
+      
+      // Validate hardware format
+      if hardwareFormat.sampleRate == 0 {
+        let errorMsg = "Invalid hardware format: sample rate is 0"
+        logMethodResult("startEngine", success: false, error: errorMsg)
+        reject("E_INVALID_HARDWARE_FORMAT", errorMsg, nil)
+        return
+      }
+      
+      if hardwareFormat.channelCount == 0 {
+        let errorMsg = "Invalid hardware format: channel count is 0"
+        logMethodResult("startEngine", success: false, error: errorMsg)
+        reject("E_INVALID_HARDWARE_FORMAT", errorMsg, nil)
+        return
+      }
 
       setupFftIfNeeded()
 
-      inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: hardwareFormat) { [weak self] buffer, time in
-        self?.processAudio(buffer: buffer, time: time)
+      do {
+        inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: hardwareFormat) { [weak self] buffer, time in
+          self?.processAudio(buffer: buffer, time: time)
+        }
+      } catch {
+        let (errorCode, errorMessage) = handleAudioEngineError(error, operation: "install audio tap")
+        logMethodResult("startEngine", success: false, error: errorMessage)
+        reject(errorCode, errorMessage, error)
+        return
       }
 
-      try engine.start()
+      do {
+        try engine.start()
+      } catch {
+        let (errorCode, errorMessage) = handleAudioEngineError(error, operation: "start audio engine")
+        logMethodResult("startEngine", success: false, error: errorMessage)
+        reject(errorCode, errorMessage, error)
+        return
+      }
+      
       running = true
+      logMethodResult("startEngine", success: true)
       resolve(nil)
     } catch {
-      reject("E_START_FAILED", "Failed to start audio engine", error)
+      let (errorCode, errorMessage) = handleAudioEngineError(error, operation: "start audio engine")
+      logMethodResult("startEngine", success: false, error: errorMessage)
+      reject(errorCode, errorMessage, error)
     }
   }
 
@@ -234,16 +621,27 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     let n = nextPowerOfTwo(desired)
     logN = vDSP_Length(round(log2(Double(n))))
 
-    fftSetup = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(n), vDSP_DFT_Direction.FORWARD)
+    do {
+      fftSetup = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(n), vDSP_DFT_Direction.FORWARD)
+      
+      if fftSetup == nil {
+        os_log("Error: Failed to create FFT setup for size %d", log: Self.logger, type: .error, n)
+        return
+      }
 
-    window = [Float](repeating: 0, count: n)
-    vDSP_hann_window(&window, vDSP_Length(n), Int32(vDSP_HANN_NORM))
+      window = [Float](repeating: 0, count: n)
+      vDSP_hann_window(&window, vDSP_Length(n), Int32(vDSP_HANN_NORM))
 
-    windowedInput = [Float](repeating: 0, count: n)
-    fftReal = [Float](repeating: 0, count: n)
-    fftImag = [Float](repeating: 0, count: n)
-    zerosImag = [Float](repeating: 0, count: n)
-    magnitudes = [Float](repeating: 0, count: n / 2)
+      windowedInput = [Float](repeating: 0, count: n)
+      fftReal = [Float](repeating: 0, count: n)
+      fftImag = [Float](repeating: 0, count: n)
+      zerosImag = [Float](repeating: 0, count: n)
+      magnitudes = [Float](repeating: 0, count: n / 2)
+      
+      os_log("FFT setup completed successfully for size %d", log: Self.logger, type: .info, n)
+    } catch {
+      os_log("Error setting up FFT: %{public}@", log: Self.logger, type: .error, error.localizedDescription)
+    }
   }
 
   private func nextPowerOfTwo(_ x: Int) -> Int {
@@ -255,10 +653,24 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
   // MARK: - DSP
 
   private func processAudio(buffer: AVAudioPCMBuffer, time: AVAudioTime) {
-    guard let channelData = buffer.floatChannelData else { return }
+    guard let channelData = buffer.floatChannelData else { 
+      os_log("Warning: No channel data available in audio buffer", log: Self.logger, type: .default)
+      return 
+    }
 
     let frameCount = Int(buffer.frameLength)
     let channelCount = Int(buffer.format.channelCount)
+    
+    // Validate buffer data
+    if frameCount == 0 {
+      os_log("Warning: Audio buffer has zero frames", log: Self.logger, type: .default)
+      return
+    }
+    
+    if channelCount == 0 {
+      os_log("Warning: Audio buffer has zero channels", log: Self.logger, type: .default)
+      return
+    }
 
     // Rate-limit callback emissions
     let now = Date().timeIntervalSince1970
@@ -356,6 +768,8 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     if bridge != nil {
       sendEvent(withName: "RealtimeAudioAnalyzer:onData", body: payload)
       sendEvent(withName: "AudioAnalysisData", body: payload)
+    } else {
+      os_log("Warning: Bridge not available, cannot send events to JavaScript", log: Self.logger, type: .default)
     }
     
     // Also post to NotificationCenter for native iOS usage
@@ -388,3 +802,8 @@ class RealtimeAudioAnalyzer: RCTEventEmitter {
     return result
   }
 }
+
+// MARK: - React Native Module Registration
+// This ensures the module is properly registered with React Native's bridge
+// Both for legacy and TurboModule architectures
+// Note: RCT_EXTERN_METHOD declarations are in RealtimeAudioAnalyzer.m

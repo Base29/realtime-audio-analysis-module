@@ -93,6 +93,11 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/src/demo/__tests__/jest.config.js",
+      "<rootDir>/src/demo/__tests__/setup.js",
+      "<rootDir>/src/demo/__tests__/test-setup.ts"
     ]
   },
   "commitlint": {

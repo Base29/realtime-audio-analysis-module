@@ -277,9 +277,14 @@ class RealtimeAudioAnalyzerTests: XCTestCase {
             if let configDict = config as? [String: Any] {
                 XCTAssertNotNil(configDict["fftSize"], "Config should contain fftSize")
                 XCTAssertNotNil(configDict["sampleRate"], "Config should contain sampleRate")
-                XCTAssertNotNil(configDict["bufferSize"], "Config should contain bufferSize")
-                XCTAssertNotNil(configDict["smoothingEnabled"], "Config should contain smoothingEnabled")
-                XCTAssertNotNil(configDict["smoothingFactor"], "Config should contain smoothingFactor")
+                XCTAssertNotNil(configDict["smoothing"], "Config should contain smoothing")
+                XCTAssertNotNil(configDict["windowFunction"], "Config should contain windowFunction")
+                
+                // Verify the values match the TypeScript interface
+                XCTAssertTrue(configDict["fftSize"] is Int, "fftSize should be an integer")
+                XCTAssertTrue(configDict["sampleRate"] is Double, "sampleRate should be a double")
+                XCTAssertTrue(configDict["smoothing"] is Double, "smoothing should be a double")
+                XCTAssertTrue(configDict["windowFunction"] is String, "windowFunction should be a string")
             } else {
                 XCTFail("Config should be a dictionary")
             }
@@ -296,7 +301,7 @@ class RealtimeAudioAnalyzerTests: XCTestCase {
     func testSetSmoothingMethod() {
         let expectation = XCTestExpectation(description: "Test setSmoothing method")
         
-        analyzer.setSmoothing(enabled: true, factor: 0.7, resolve: { result in
+        analyzer.setSmoothing(enabled: true, factor: NSNumber(value: 0.7), resolve: { result in
             XCTAssertNil(result, "setSmoothing should resolve with nil on success")
             expectation.fulfill()
         }, reject: { code, message, error in
@@ -310,7 +315,7 @@ class RealtimeAudioAnalyzerTests: XCTestCase {
     func testSetFftConfigMethod() {
         let expectation = XCTestExpectation(description: "Test setFftConfig method")
         
-        analyzer.setFftConfig(fftSize: 2048, downsampleBins: 64, resolve: { result in
+        analyzer.setFftConfig(fftSize: NSNumber(value: 2048), downsampleBins: NSNumber(value: 64), resolve: { result in
             XCTAssertNil(result, "setFftConfig should resolve with nil on success")
             expectation.fulfill()
         }, reject: { code, message, error in
@@ -488,5 +493,66 @@ class RealtimeAudioAnalyzerTests: XCTestCase {
         })
         
         wait(for: [expectation], timeout: 30.0)
+    }
+    
+    // MARK: - Test bridge registration (Task 2)
+    
+    func testModuleNameConsistency() {
+        let moduleName = RealtimeAudioAnalyzer.moduleName()
+        XCTAssertEqual(moduleName, "RealtimeAudioAnalyzer", "Module name should be consistent")
+    }
+    
+    func testRequiresMainQueueSetup() {
+        let requiresMainQueue = RealtimeAudioAnalyzer.requiresMainQueueSetup()
+        XCTAssertFalse(requiresMainQueue, "Module should not require main queue setup for audio processing")
+    }
+    
+    func testSupportedEventsConfiguration() {
+        let supportedEvents = analyzer.supportedEvents()
+        
+        XCTAssertNotNil(supportedEvents, "supportedEvents should not return nil")
+        XCTAssertEqual(supportedEvents!.count, 2, "Should support exactly 2 event names")
+        XCTAssertTrue(supportedEvents!.contains("RealtimeAudioAnalyzer:onData"), "Should support legacy event name")
+        XCTAssertTrue(supportedEvents!.contains("AudioAnalysisData"), "Should support new event name")
+    }
+    
+    func testMethodQueueConfiguration() {
+        // Test that methodQueue is properly configured for audio processing
+        let methodQueue = analyzer.methodQueue
+        XCTAssertNotNil(methodQueue, "Method queue should be configured")
+        
+        // Verify it's not the main queue (audio processing should be off main thread)
+        XCTAssertNotEqual(methodQueue, DispatchQueue.main, "Method queue should not be main queue for audio processing")
+    }
+    
+    func testConstantsExport() {
+        let constants = analyzer.constantsToExport()
+        
+        XCTAssertNotNil(constants, "Constants should be exported")
+        
+        if let constantsDict = constants as? [String: Any] {
+            XCTAssertEqual(constantsDict["moduleName"] as? String, "RealtimeAudioAnalyzer", "Module name should be exported in constants")
+            
+            if let supportedMethods = constantsDict["supportedMethods"] as? [String] {
+                let expectedMethods = [
+                    "start", "stop", "isRunning",
+                    "startAnalysis", "stopAnalysis", "isAnalyzing", 
+                    "getAnalysisConfig", "setSmoothing", "setFftConfig"
+                ]
+                
+                for method in expectedMethods {
+                    XCTAssertTrue(supportedMethods.contains(method), "Should export method: \(method)")
+                }
+            } else {
+                XCTFail("supportedMethods should be exported as array")
+            }
+        } else {
+            XCTFail("Constants should be a dictionary")
+        }
+    }
+    
+    func testRCTEventEmitterInheritance() {
+        // Verify that the analyzer properly inherits from RCTEventEmitter
+        XCTAssertTrue(analyzer.isKind(of: RCTEventEmitter.self), "RealtimeAudioAnalyzer should inherit from RCTEventEmitter")
     }
 }
